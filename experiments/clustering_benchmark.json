@@ -1,0 +1,24 @@
+{
+  "n_samples": 498,
+  "n_clusters": 6,
+  "baselines": {
+    "baseline_1_tfidf_kmeans": {
+      "method": "TF-IDF (1500d) + K-Means",
+      "silhouette_score": 0.0176,
+      "davies_bouldin_index": 6.3747,
+      "calinski_harabasz_index": 4.56
+    },
+    "baseline_2_sbert_kmeans": {
+      "method": "Sentence-BERT (384d) + K-Means",
+      "silhouette_score": 0.0347,
+      "davies_bouldin_index": 3.8406,
+      "calinski_harabasz_index": 15.32
+    },
+    "proposed_sbert_reduced_kmeans": {
+      "method": "Sentence-BERT + SVD(10d) + K-Means + c-TF-IDF (Proposed)",
+      "silhouette_score": 0.0384,
+      "davies_bouldin_index": 3.8153,
+      "calinski_harabasz_index": 15.37
+    }
+  }
+}

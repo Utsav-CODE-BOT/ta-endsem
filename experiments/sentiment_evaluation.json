@@ -1,0 +1,29 @@
+{
+  "n_samples": 120,
+  "accuracy": 0.8333,
+  "macro_precision": 0.7829,
+  "macro_recall": 0.8123,
+  "macro_f1": 0.796,
+  "confusion_matrix": {
+    "negative": {
+      "negative": 64,
+      "neutral": 7,
+      "positive": 3
+    },
+    "neutral": {
+      "negative": 5,
+      "neutral": 17,
+      "positive": 2
+    },
+    "positive": {
+      "negative": 0,
+      "neutral": 3,
+      "positive": 19
+    }
+  },
+  "classes": [
+    "negative",
+    "neutral",
+    "positive"
+  ]
+}

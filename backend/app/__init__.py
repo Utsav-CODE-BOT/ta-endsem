@@ -1,0 +1,3 @@
+"""
+VoiceMiner Application Package
+"""

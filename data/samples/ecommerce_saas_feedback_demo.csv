@@ -1,0 +1,501 @@
+id,text,timestamp,source,sentiment,rating,product,category,component,dataset_type
+saas_0001,UPI transaction timed out but money was debited from my bank!,2026-08-21 12:01:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0002,"Cannot complete payment, the buy button is unresponsive.",2026-08-08 16:08:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0003,Credit card transaction rejected repeatedly on checkout.,2026-08-23 08:57:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0004,Payment failed on checkout with error 502 after v4.2 update.,2026-08-19 22:02:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0005,High CPU usage and battery drain while app is open in background.,2026-08-07 16:32:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0006,The new platform version is noticeably snappier and loads instantly.,2026-08-02 02:12:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0007,Payment failed on checkout with error 502 after v4.2 update.,2026-08-24 02:26:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0008,Password reset link is broken and sends me to a blank screen.,2026-08-19 17:51:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0009,Credit card transaction rejected repeatedly on checkout.,2026-08-25 14:44:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0010,Package was delivered 4 days late and box was crushed.,2026-08-09 13:13:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0011,"Cannot complete payment, the buy button is unresponsive.",2026-08-04 11:24:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0012,FaceID login fails on iOS after the latest update.,2026-08-12 20:38:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0013,Credit card transaction rejected repeatedly on checkout.,2026-08-26 10:46:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0014,Very helpful live chat agent helped reconfigure my subscription.,2026-08-04 21:05:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0015,Tracking number shows delivered but package is nowhere to be found.,2026-08-11 05:39:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0016,Payment failed on checkout with error 502 after v4.2 update.,2026-08-19 15:45:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0017,Payment failed on checkout with error 502 after v4.2 update.,2026-08-22 16:49:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0018,"Cannot complete payment, the buy button is unresponsive.",2026-08-03 16:55:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0019,The new platform version is noticeably snappier and loads instantly.,2026-08-13 17:29:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0020,Credit card transaction rejected repeatedly on checkout.,2026-08-27 20:10:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0021,The new platform version is noticeably snappier and loads instantly.,2026-08-08 06:17:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0022,"Checkout was instant with Apple Pay, very convenient.",2026-08-04 04:40:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0023,"Checkout was instant with Apple Pay, very convenient.",2026-08-19 08:15:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0024,The new platform version is noticeably snappier and loads instantly.,2026-08-15 21:17:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0025,UPI transaction timed out but money was debited from my bank!,2026-08-24 02:14:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0026,"Payment went through smoothly, quick checkout experience.",2026-08-27 10:14:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0027,Payment failed on checkout with error 502 after v4.2 update.,2026-08-26 19:25:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0028,Package was delivered 4 days late and box was crushed.,2026-08-08 03:56:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0029,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-08 05:31:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0030,Payment failed on checkout with error 502 after v4.2 update.,2026-08-21 23:09:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0031,Very helpful live chat agent helped reconfigure my subscription.,2026-08-09 08:35:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0032,"Package arrived in perfect condition, great tracking updates.",2026-08-10 08:37:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0033,Payment failed on checkout with error 502 after v4.2 update.,2026-08-19 21:23:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0034,UPI transaction timed out but money was debited from my bank!,2026-08-06 01:31:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0035,Payment failed on checkout with error 502 after v4.2 update.,2026-08-25 10:55:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0036,UPI transaction timed out but money was debited from my bank!,2026-08-21 14:50:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0037,Credit card transaction rejected repeatedly on checkout.,2026-08-20 11:24:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0038,Very helpful live chat agent helped reconfigure my subscription.,2026-08-16 01:16:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0039,UPI transaction timed out but money was debited from my bank!,2026-08-28 09:43:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0040,Payment failed on checkout with error 502 after v4.2 update.,2026-08-23 02:48:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0041,Payment failed on checkout with error 502 after v4.2 update.,2026-08-21 19:07:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0042,FaceID login fails on iOS after the latest update.,2026-08-06 23:00:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0043,"Cannot complete payment, the buy button is unresponsive.",2026-08-17 14:32:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0044,"Checkout was instant with Apple Pay, very convenient.",2026-08-29 05:19:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0045,"Payment went through smoothly, quick checkout experience.",2026-08-18 04:12:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0046,"Support rep Sarah resolved my billing question within 5 minutes, fantastic service!",2026-08-12 14:34:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0047,No response to my refund ticket for over two weeks!,2026-08-02 04:20:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0048,Tracking number shows delivered but package is nowhere to be found.,2026-08-01 12:59:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0049,Payment failed on checkout with error 502 after v4.2 update.,2026-08-27 18:15:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0050,UPI transaction timed out but money was debited from my bank!,2026-08-19 11:05:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0051,Credit card transaction rejected repeatedly on checkout.,2026-08-27 11:48:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0052,No response to my refund ticket for over two weeks!,2026-08-05 13:42:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0053,"Support rep Sarah resolved my billing question within 5 minutes, fantastic service!",2026-08-18 14:16:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0054,Very helpful live chat agent helped reconfigure my subscription.,2026-08-29 04:27:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0055,App crashes every time I try to log in with Google OAuth.,2026-08-19 08:44:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0056,The new platform version is noticeably snappier and loads instantly.,2026-08-23 18:25:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0057,Package was delivered 4 days late and box was crushed.,2026-08-21 20:28:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0058,Password reset link is broken and sends me to a blank screen.,2026-08-15 12:15:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0059,Dashboard takes 30 seconds to load analytics reports.,2026-08-03 19:01:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0060,Password reset link is broken and sends me to a blank screen.,2026-08-18 16:37:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0061,The new platform version is noticeably snappier and loads instantly.,2026-08-01 11:45:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0062,Credit card transaction rejected repeatedly on checkout.,2026-08-02 16:04:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0063,Credit card transaction rejected repeatedly on checkout.,2026-08-28 19:04:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0064,App crashes every time I try to log in with Google OAuth.,2026-08-10 06:31:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0065,Dashboard takes 30 seconds to load analytics reports.,2026-08-18 13:46:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0066,"Cannot complete payment, the buy button is unresponsive.",2026-08-20 00:15:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0067,Payment failed on checkout with error 502 after v4.2 update.,2026-08-26 22:12:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0068,Credit card transaction rejected repeatedly on checkout.,2026-08-22 22:22:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0069,The new platform version is noticeably snappier and loads instantly.,2026-08-16 08:03:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0070,Credit card transaction rejected repeatedly on checkout.,2026-08-21 12:03:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0071,App crashes every time I try to log in with Google OAuth.,2026-08-11 12:15:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0072,"Payment went through smoothly, quick checkout experience.",2026-08-08 02:28:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0073,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-14 14:17:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0074,Very helpful live chat agent helped reconfigure my subscription.,2026-08-08 11:28:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0075,Very helpful live chat agent helped reconfigure my subscription.,2026-08-04 10:41:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0076,"Package arrived in perfect condition, great tracking updates.",2026-08-27 09:05:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0077,Credit card transaction rejected repeatedly on checkout.,2026-08-28 16:10:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0078,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-16 15:55:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0079,Payment failed on checkout with error 502 after v4.2 update.,2026-08-02 14:24:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0080,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-13 17:59:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0081,Very helpful live chat agent helped reconfigure my subscription.,2026-08-10 22:44:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0082,Payment failed on checkout with error 502 after v4.2 update.,2026-08-23 07:31:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0083,Dashboard takes 30 seconds to load analytics reports.,2026-08-10 15:03:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0084,UPI transaction timed out but money was debited from my bank!,2026-08-25 02:03:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0085,No response to my refund ticket for over two weeks!,2026-08-02 10:37:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0086,Credit card transaction rejected repeatedly on checkout.,2026-08-18 01:10:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0087,"Checkout was instant with Apple Pay, very convenient.",2026-08-17 11:54:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0088,Password reset link is broken and sends me to a blank screen.,2026-08-04 04:04:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0089,Dashboard takes 30 seconds to load analytics reports.,2026-08-13 12:56:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0090,Credit card transaction rejected repeatedly on checkout.,2026-08-09 03:38:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0091,UPI transaction timed out but money was debited from my bank!,2026-08-20 11:26:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0092,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-20 01:20:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0093,Package was delivered 4 days late and box was crushed.,2026-08-08 06:45:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0094,"Payment went through smoothly, quick checkout experience.",2026-08-08 17:25:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0095,Credit card transaction rejected repeatedly on checkout.,2026-08-23 05:19:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0096,Credit card transaction rejected repeatedly on checkout.,2026-08-25 11:00:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0097,Credit card transaction rejected repeatedly on checkout.,2026-08-19 12:04:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0098,Tracking number shows delivered but package is nowhere to be found.,2026-08-17 17:08:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0099,Login was seamless and biometrics worked flawlessly.,2026-08-03 16:23:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0100,Very helpful live chat agent helped reconfigure my subscription.,2026-08-06 23:53:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0101,High CPU usage and battery drain while app is open in background.,2026-08-23 18:39:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0102,Payment failed on checkout with error 502 after v4.2 update.,2026-08-27 05:33:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0103,"Package arrived in perfect condition, great tracking updates.",2026-08-28 02:19:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0104,"Cannot complete payment, the buy button is unresponsive.",2026-08-04 13:16:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0105,"Payment went through smoothly, quick checkout experience.",2026-08-05 08:35:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0106,App crashes every time I try to log in with Google OAuth.,2026-08-09 18:38:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0107,UPI transaction timed out but money was debited from my bank!,2026-08-23 19:13:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0108,Credit card transaction rejected repeatedly on checkout.,2026-08-28 17:32:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0109,UPI transaction timed out but money was debited from my bank!,2026-08-28 10:05:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0110,Payment failed on checkout with error 502 after v4.2 update.,2026-08-27 17:02:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0111,Dashboard takes 30 seconds to load analytics reports.,2026-08-25 13:40:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0112,Very helpful live chat agent helped reconfigure my subscription.,2026-08-07 08:28:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0113,Payment failed on checkout with error 502 after v4.2 update.,2026-08-23 22:35:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0114,"Payment went through smoothly, quick checkout experience.",2026-08-04 07:57:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0115,Tracking number shows delivered but package is nowhere to be found.,2026-08-18 10:53:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0116,Credit card transaction rejected repeatedly on checkout.,2026-08-20 02:09:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0117,Credit card transaction rejected repeatedly on checkout.,2026-08-02 18:23:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0118,Password reset link is broken and sends me to a blank screen.,2026-08-12 15:43:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0119,"Cannot complete payment, the buy button is unresponsive.",2026-08-22 12:22:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0120,UPI transaction timed out but money was debited from my bank!,2026-08-28 22:39:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0121,"Checkout was instant with Apple Pay, very convenient.",2026-08-08 14:51:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0122,Package was delivered 4 days late and box was crushed.,2026-08-14 09:11:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0123,UPI transaction timed out but money was debited from my bank!,2026-08-26 22:51:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0124,Payment failed on checkout with error 502 after v4.2 update.,2026-08-24 16:17:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0125,Password reset link is broken and sends me to a blank screen.,2026-08-23 12:24:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0126,Payment failed on checkout with error 502 after v4.2 update.,2026-08-29 00:14:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0127,Password reset link is broken and sends me to a blank screen.,2026-08-15 20:19:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0128,App crashes every time I try to log in with Google OAuth.,2026-08-08 09:42:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0129,UPI transaction timed out but money was debited from my bank!,2026-08-13 19:17:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0130,UPI transaction timed out but money was debited from my bank!,2026-08-25 17:22:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0131,Very helpful live chat agent helped reconfigure my subscription.,2026-08-14 06:53:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0132,FaceID login fails on iOS after the latest update.,2026-08-11 09:07:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0133,Credit card transaction rejected repeatedly on checkout.,2026-08-07 03:16:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0134,Tracking number shows delivered but package is nowhere to be found.,2026-08-05 04:27:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0135,UPI transaction timed out but money was debited from my bank!,2026-08-24 19:27:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0136,Dashboard takes 30 seconds to load analytics reports.,2026-08-17 12:24:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0137,"Package arrived in perfect condition, great tracking updates.",2026-08-07 17:02:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0138,Very helpful live chat agent helped reconfigure my subscription.,2026-08-02 01:59:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0139,UPI transaction timed out but money was debited from my bank!,2026-08-23 08:47:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0140,UPI transaction timed out but money was debited from my bank!,2026-08-07 20:27:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0141,Payment failed on checkout with error 502 after v4.2 update.,2026-08-22 19:39:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0142,Package was delivered 4 days late and box was crushed.,2026-08-28 12:46:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0143,"Package arrived in perfect condition, great tracking updates.",2026-08-17 18:42:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0144,Login was seamless and biometrics worked flawlessly.,2026-08-11 21:44:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0145,"Package arrived in perfect condition, great tracking updates.",2026-08-18 13:12:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0146,UPI transaction timed out but money was debited from my bank!,2026-08-22 21:43:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0147,Login was seamless and biometrics worked flawlessly.,2026-08-07 04:36:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0148,Payment failed on checkout with error 502 after v4.2 update.,2026-08-14 02:53:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0149,"Package arrived in perfect condition, great tracking updates.",2026-08-10 18:13:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0150,UPI transaction timed out but money was debited from my bank!,2026-08-27 03:38:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0151,App crashes every time I try to log in with Google OAuth.,2026-08-15 23:28:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0152,"Checkout was instant with Apple Pay, very convenient.",2026-08-18 00:50:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0153,Credit card transaction rejected repeatedly on checkout.,2026-08-22 11:18:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0154,Payment failed on checkout with error 502 after v4.2 update.,2026-08-22 04:21:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0155,Payment failed on checkout with error 502 after v4.2 update.,2026-08-25 16:43:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0156,Payment failed on checkout with error 502 after v4.2 update.,2026-08-26 15:09:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0157,UPI transaction timed out but money was debited from my bank!,2026-08-09 00:39:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0158,The new platform version is noticeably snappier and loads instantly.,2026-08-15 22:56:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0159,UPI transaction timed out but money was debited from my bank!,2026-08-19 15:45:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0160,"Payment went through smoothly, quick checkout experience.",2026-08-16 21:15:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0161,Login was seamless and biometrics worked flawlessly.,2026-08-22 07:00:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0162,Credit card transaction rejected repeatedly on checkout.,2026-08-28 12:49:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0163,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-07 07:33:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0164,"Cannot complete payment, the buy button is unresponsive.",2026-08-03 02:15:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0165,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-15 13:51:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0166,UPI transaction timed out but money was debited from my bank!,2026-08-23 01:35:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0167,"Payment went through smoothly, quick checkout experience.",2026-08-25 23:39:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0168,Very helpful live chat agent helped reconfigure my subscription.,2026-08-17 22:53:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0169,No response to my refund ticket for over two weeks!,2026-08-15 14:47:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0170,Password reset link is broken and sends me to a blank screen.,2026-08-15 17:48:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0171,"Cannot complete payment, the buy button is unresponsive.",2026-08-28 05:17:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0172,Password reset link is broken and sends me to a blank screen.,2026-08-18 00:40:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0173,Login was seamless and biometrics worked flawlessly.,2026-08-09 23:04:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0174,Package was delivered 4 days late and box was crushed.,2026-08-08 17:21:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0175,"Payment went through smoothly, quick checkout experience.",2026-08-18 11:08:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0176,"Payment went through smoothly, quick checkout experience.",2026-08-08 21:44:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0177,Credit card transaction rejected repeatedly on checkout.,2026-08-23 15:04:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0178,"Package arrived in perfect condition, great tracking updates.",2026-08-12 02:29:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0179,"Package arrived in perfect condition, great tracking updates.",2026-08-02 15:53:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0180,Payment failed on checkout with error 502 after v4.2 update.,2026-08-14 03:44:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0181,Credit card transaction rejected repeatedly on checkout.,2026-08-29 03:24:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0182,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-12 18:48:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0183,UPI transaction timed out but money was debited from my bank!,2026-08-28 22:34:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0184,Password reset link is broken and sends me to a blank screen.,2026-08-19 04:57:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0185,"Package arrived in perfect condition, great tracking updates.",2026-08-16 16:17:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0186,Package was delivered 4 days late and box was crushed.,2026-08-16 09:24:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0187,Credit card transaction rejected repeatedly on checkout.,2026-08-23 06:51:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0188,"Payment went through smoothly, quick checkout experience.",2026-08-06 23:58:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0189,Tracking number shows delivered but package is nowhere to be found.,2026-08-21 02:01:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0190,Payment failed on checkout with error 502 after v4.2 update.,2026-08-20 03:42:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0191,Password reset link is broken and sends me to a blank screen.,2026-08-21 22:08:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0192,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-06 10:16:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0193,Package was delivered 4 days late and box was crushed.,2026-08-11 15:29:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0194,"Package arrived in perfect condition, great tracking updates.",2026-08-11 21:17:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0195,Payment failed on checkout with error 502 after v4.2 update.,2026-08-09 11:30:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0196,The new platform version is noticeably snappier and loads instantly.,2026-08-25 02:03:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0197,UPI transaction timed out but money was debited from my bank!,2026-08-12 16:41:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0198,UPI transaction timed out but money was debited from my bank!,2026-08-26 05:02:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0199,Payment failed on checkout with error 502 after v4.2 update.,2026-08-08 15:53:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0200,Payment failed on checkout with error 502 after v4.2 update.,2026-08-20 13:15:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0201,No response to my refund ticket for over two weeks!,2026-08-22 12:36:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0202,Tracking number shows delivered but package is nowhere to be found.,2026-08-16 07:16:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0203,"Cannot complete payment, the buy button is unresponsive.",2026-08-07 04:38:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0204,Payment failed on checkout with error 502 after v4.2 update.,2026-08-25 14:19:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0205,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-01 18:36:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0206,UPI transaction timed out but money was debited from my bank!,2026-08-14 07:12:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0207,UPI transaction timed out but money was debited from my bank!,2026-08-20 07:53:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0208,Login was seamless and biometrics worked flawlessly.,2026-08-05 07:49:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0209,"Cannot complete payment, the buy button is unresponsive.",2026-08-29 06:38:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0210,Payment failed on checkout with error 502 after v4.2 update.,2026-08-27 03:50:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0211,Tracking number shows delivered but package is nowhere to be found.,2026-08-18 22:42:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0212,Package was delivered 4 days late and box was crushed.,2026-08-04 01:41:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0213,No response to my refund ticket for over two weeks!,2026-08-01 22:52:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0214,The new platform version is noticeably snappier and loads instantly.,2026-08-04 22:23:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0215,Payment failed on checkout with error 502 after v4.2 update.,2026-08-27 23:45:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0216,The new platform version is noticeably snappier and loads instantly.,2026-08-07 08:33:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0217,Very helpful live chat agent helped reconfigure my subscription.,2026-08-10 04:51:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0218,Credit card transaction rejected repeatedly on checkout.,2026-08-26 00:29:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0219,Payment failed on checkout with error 502 after v4.2 update.,2026-08-25 03:17:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0220,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-08 11:17:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0221,High CPU usage and battery drain while app is open in background.,2026-08-08 23:36:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0222,Payment failed on checkout with error 502 after v4.2 update.,2026-08-22 21:21:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0223,Credit card transaction rejected repeatedly on checkout.,2026-08-28 19:11:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0224,FaceID login fails on iOS after the latest update.,2026-08-12 17:21:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0225,Payment failed on checkout with error 502 after v4.2 update.,2026-08-21 07:56:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0226,UPI transaction timed out but money was debited from my bank!,2026-08-02 01:12:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0227,No response to my refund ticket for over two weeks!,2026-08-09 08:26:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0228,No response to my refund ticket for over two weeks!,2026-08-18 16:44:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0229,Credit card transaction rejected repeatedly on checkout.,2026-08-22 07:31:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0230,Password reset link is broken and sends me to a blank screen.,2026-08-01 11:18:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0231,Login was seamless and biometrics worked flawlessly.,2026-08-14 07:15:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0232,Credit card transaction rejected repeatedly on checkout.,2026-08-23 03:23:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0233,Very helpful live chat agent helped reconfigure my subscription.,2026-08-17 20:27:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0234,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-11 20:44:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0235,Password reset link is broken and sends me to a blank screen.,2026-08-09 18:16:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0236,Package was delivered 4 days late and box was crushed.,2026-08-05 08:12:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0237,"Checkout was instant with Apple Pay, very convenient.",2026-08-05 08:34:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0238,No response to my refund ticket for over two weeks!,2026-08-07 15:47:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0239,"Support rep Sarah resolved my billing question within 5 minutes, fantastic service!",2026-08-10 08:37:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0240,"Checkout was instant with Apple Pay, very convenient.",2026-08-20 18:06:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0241,"Checkout was instant with Apple Pay, very convenient.",2026-08-10 16:23:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0242,Very helpful live chat agent helped reconfigure my subscription.,2026-08-10 09:45:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0243,Credit card transaction rejected repeatedly on checkout.,2026-08-05 17:02:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0244,"Payment went through smoothly, quick checkout experience.",2026-08-18 18:44:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0245,Password reset link is broken and sends me to a blank screen.,2026-08-22 00:06:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0246,Credit card transaction rejected repeatedly on checkout.,2026-08-19 18:30:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0247,FaceID login fails on iOS after the latest update.,2026-08-11 14:03:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0248,"Payment went through smoothly, quick checkout experience.",2026-08-29 00:07:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0249,Dashboard takes 30 seconds to load analytics reports.,2026-08-14 00:04:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0250,Payment failed on checkout with error 502 after v4.2 update.,2026-08-22 06:03:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0251,Payment failed on checkout with error 502 after v4.2 update.,2026-08-27 03:19:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0252,"Package arrived in perfect condition, great tracking updates.",2026-08-08 12:35:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0253,UPI transaction timed out but money was debited from my bank!,2026-08-21 04:50:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0254,Credit card transaction rejected repeatedly on checkout.,2026-08-26 01:24:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0255,Dashboard takes 30 seconds to load analytics reports.,2026-08-15 18:55:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0256,High CPU usage and battery drain while app is open in background.,2026-08-14 18:36:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0257,"Cannot complete payment, the buy button is unresponsive.",2026-08-03 04:47:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0258,Payment failed on checkout with error 502 after v4.2 update.,2026-08-25 15:40:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0259,Payment failed on checkout with error 502 after v4.2 update.,2026-08-22 11:10:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0260,Payment failed on checkout with error 502 after v4.2 update.,2026-08-18 11:10:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0261,High CPU usage and battery drain while app is open in background.,2026-08-14 23:44:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0262,Password reset link is broken and sends me to a blank screen.,2026-08-16 18:02:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0263,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-11 07:18:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0264,FaceID login fails on iOS after the latest update.,2026-08-04 06:14:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0265,UPI transaction timed out but money was debited from my bank!,2026-08-27 05:37:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0266,Very helpful live chat agent helped reconfigure my subscription.,2026-08-07 22:07:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0267,FaceID login fails on iOS after the latest update.,2026-08-09 05:09:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0268,Payment failed on checkout with error 502 after v4.2 update.,2026-08-27 13:04:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0269,UPI transaction timed out but money was debited from my bank!,2026-08-26 18:38:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0270,Payment failed on checkout with error 502 after v4.2 update.,2026-08-19 18:28:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0271,Credit card transaction rejected repeatedly on checkout.,2026-08-23 18:44:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0272,No response to my refund ticket for over two weeks!,2026-08-10 01:34:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0273,Credit card transaction rejected repeatedly on checkout.,2026-08-15 11:38:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0274,High CPU usage and battery drain while app is open in background.,2026-08-15 08:20:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0275,Password reset link is broken and sends me to a blank screen.,2026-08-09 09:05:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0276,No response to my refund ticket for over two weeks!,2026-08-23 03:37:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0277,Payment failed on checkout with error 502 after v4.2 update.,2026-08-26 06:52:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0278,"Support rep Sarah resolved my billing question within 5 minutes, fantastic service!",2026-08-02 14:30:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0279,Payment failed on checkout with error 502 after v4.2 update.,2026-08-21 23:58:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0280,"Payment went through smoothly, quick checkout experience.",2026-08-19 22:40:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0281,"Package arrived in perfect condition, great tracking updates.",2026-08-04 00:22:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0282,"Cannot complete payment, the buy button is unresponsive.",2026-08-11 19:42:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0283,Credit card transaction rejected repeatedly on checkout.,2026-08-28 14:21:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0284,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-16 18:42:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0285,Credit card transaction rejected repeatedly on checkout.,2026-08-28 02:02:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0286,"Cannot complete payment, the buy button is unresponsive.",2026-08-11 17:20:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0287,Credit card transaction rejected repeatedly on checkout.,2026-08-25 21:55:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0288,Very helpful live chat agent helped reconfigure my subscription.,2026-08-02 06:55:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0289,App crashes every time I try to log in with Google OAuth.,2026-08-15 22:03:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0290,No response to my refund ticket for over two weeks!,2026-08-17 20:39:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0291,Payment failed on checkout with error 502 after v4.2 update.,2026-08-21 23:48:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0292,Login was seamless and biometrics worked flawlessly.,2026-08-10 02:08:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0293,"Cannot complete payment, the buy button is unresponsive.",2026-08-16 07:31:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0294,Password reset link is broken and sends me to a blank screen.,2026-08-02 05:38:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0295,Credit card transaction rejected repeatedly on checkout.,2026-08-23 14:19:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0296,Password reset link is broken and sends me to a blank screen.,2026-08-18 22:05:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0297,No response to my refund ticket for over two weeks!,2026-08-27 12:29:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0298,"Package arrived in perfect condition, great tracking updates.",2026-08-21 13:31:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0299,FaceID login fails on iOS after the latest update.,2026-08-11 01:45:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0300,Password reset link is broken and sends me to a blank screen.,2026-08-15 00:30:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0301,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-16 02:09:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0302,"Payment went through smoothly, quick checkout experience.",2026-08-08 04:32:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0303,"Cannot complete payment, the buy button is unresponsive.",2026-08-28 11:17:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0304,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-28 22:21:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0305,Payment failed on checkout with error 502 after v4.2 update.,2026-08-17 17:52:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0306,Dashboard takes 30 seconds to load analytics reports.,2026-08-11 08:19:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0307,App crashes every time I try to log in with Google OAuth.,2026-08-20 06:31:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0308,Tracking number shows delivered but package is nowhere to be found.,2026-08-16 02:30:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0309,Very helpful live chat agent helped reconfigure my subscription.,2026-08-12 02:48:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0310,Package was delivered 4 days late and box was crushed.,2026-08-13 23:59:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0311,Payment failed on checkout with error 502 after v4.2 update.,2026-08-28 15:44:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0312,"Package arrived in perfect condition, great tracking updates.",2026-08-13 16:54:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0313,No response to my refund ticket for over two weeks!,2026-08-02 19:47:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0314,High CPU usage and battery drain while app is open in background.,2026-08-23 21:24:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0315,Credit card transaction rejected repeatedly on checkout.,2026-08-27 05:09:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0316,Dashboard takes 30 seconds to load analytics reports.,2026-08-02 13:32:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0317,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-11 12:55:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0318,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-05 01:58:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0319,"Package arrived in perfect condition, great tracking updates.",2026-08-02 08:09:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0320,Payment failed on checkout with error 502 after v4.2 update.,2026-08-29 05:09:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0321,UPI transaction timed out but money was debited from my bank!,2026-08-26 17:21:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0322,Package was delivered 4 days late and box was crushed.,2026-08-14 05:05:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0323,Credit card transaction rejected repeatedly on checkout.,2026-08-29 06:54:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0324,No response to my refund ticket for over two weeks!,2026-08-12 05:45:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0325,UPI transaction timed out but money was debited from my bank!,2026-08-29 02:02:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0326,Login was seamless and biometrics worked flawlessly.,2026-08-09 05:43:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0327,"Package arrived in perfect condition, great tracking updates.",2026-08-09 08:05:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0328,"Cannot complete payment, the buy button is unresponsive.",2026-08-05 05:45:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0329,Login was seamless and biometrics worked flawlessly.,2026-08-15 14:44:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0330,Credit card transaction rejected repeatedly on checkout.,2026-08-01 10:20:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0331,"Package arrived in perfect condition, great tracking updates.",2026-08-10 20:23:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0332,"Package arrived in perfect condition, great tracking updates.",2026-08-05 16:33:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0333,Payment failed on checkout with error 502 after v4.2 update.,2026-08-20 06:50:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0334,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-06 11:39:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0335,Credit card transaction rejected repeatedly on checkout.,2026-08-21 06:15:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0336,Credit card transaction rejected repeatedly on checkout.,2026-08-19 13:14:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0337,Payment failed on checkout with error 502 after v4.2 update.,2026-08-09 23:16:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0338,Payment failed on checkout with error 502 after v4.2 update.,2026-08-26 23:57:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0339,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-18 14:04:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0340,The new platform version is noticeably snappier and loads instantly.,2026-08-13 03:19:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0341,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-15 07:16:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0342,The new platform version is noticeably snappier and loads instantly.,2026-08-28 18:12:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0343,Payment failed on checkout with error 502 after v4.2 update.,2026-08-29 00:06:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0344,Payment failed on checkout with error 502 after v4.2 update.,2026-08-19 20:36:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0345,Dashboard takes 30 seconds to load analytics reports.,2026-08-23 18:01:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0346,Payment failed on checkout with error 502 after v4.2 update.,2026-08-22 21:17:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0347,UPI transaction timed out but money was debited from my bank!,2026-08-29 06:49:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0348,No response to my refund ticket for over two weeks!,2026-08-03 04:47:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0349,"Cannot complete payment, the buy button is unresponsive.",2026-08-27 18:49:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0350,UPI transaction timed out but money was debited from my bank!,2026-08-20 20:14:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0351,UPI transaction timed out but money was debited from my bank!,2026-08-20 17:43:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0352,"Checkout was instant with Apple Pay, very convenient.",2026-08-26 06:43:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0353,UPI transaction timed out but money was debited from my bank!,2026-08-21 12:57:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0354,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-02 18:50:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0355,"Payment went through smoothly, quick checkout experience.",2026-08-03 03:23:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0356,"Package arrived in perfect condition, great tracking updates.",2026-08-03 18:20:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0357,Very helpful live chat agent helped reconfigure my subscription.,2026-08-06 15:08:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0358,FaceID login fails on iOS after the latest update.,2026-08-13 01:32:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0359,Tracking number shows delivered but package is nowhere to be found.,2026-08-27 14:16:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0360,Package was delivered 4 days late and box was crushed.,2026-08-16 18:47:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0361,Very helpful live chat agent helped reconfigure my subscription.,2026-08-26 12:29:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0362,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-05 16:55:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0363,Payment failed on checkout with error 502 after v4.2 update.,2026-08-29 02:23:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0364,Very helpful live chat agent helped reconfigure my subscription.,2026-08-13 09:16:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0365,FaceID login fails on iOS after the latest update.,2026-08-04 23:23:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0366,UPI transaction timed out but money was debited from my bank!,2026-08-19 21:52:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0367,Password reset link is broken and sends me to a blank screen.,2026-08-12 12:43:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0368,Very helpful live chat agent helped reconfigure my subscription.,2026-08-16 09:39:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0369,The new platform version is noticeably snappier and loads instantly.,2026-08-12 04:14:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0370,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-04 05:52:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0371,Credit card transaction rejected repeatedly on checkout.,2026-08-23 18:41:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0372,Login was seamless and biometrics worked flawlessly.,2026-08-05 10:02:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0373,Password reset link is broken and sends me to a blank screen.,2026-08-16 12:06:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0374,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-18 13:24:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0375,Very helpful live chat agent helped reconfigure my subscription.,2026-08-13 06:47:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0376,"Payment went through smoothly, quick checkout experience.",2026-08-15 03:47:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0377,No response to my refund ticket for over two weeks!,2026-08-15 05:06:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0378,Payment failed on checkout with error 502 after v4.2 update.,2026-08-20 22:17:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0379,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-12 15:28:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0380,Tracking number shows delivered but package is nowhere to be found.,2026-08-08 20:06:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0381,Credit card transaction rejected repeatedly on checkout.,2026-08-19 05:22:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0382,"Cannot complete payment, the buy button is unresponsive.",2026-08-13 17:12:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0383,UPI transaction timed out but money was debited from my bank!,2026-08-28 23:05:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0384,Very helpful live chat agent helped reconfigure my subscription.,2026-08-22 05:38:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0385,"Payment went through smoothly, quick checkout experience.",2026-08-02 19:15:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0386,Payment failed on checkout with error 502 after v4.2 update.,2026-08-27 03:13:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0387,UPI transaction timed out but money was debited from my bank!,2026-08-26 02:13:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0388,"Cannot complete payment, the buy button is unresponsive.",2026-08-27 16:21:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0389,Payment failed on checkout with error 502 after v4.2 update.,2026-08-27 04:00:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0390,FaceID login fails on iOS after the latest update.,2026-08-05 13:34:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0391,UPI transaction timed out but money was debited from my bank!,2026-08-26 14:07:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0392,Tracking number shows delivered but package is nowhere to be found.,2026-08-01 13:00:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0393,Payment failed on checkout with error 502 after v4.2 update.,2026-08-26 16:37:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0394,"Payment went through smoothly, quick checkout experience.",2026-08-06 17:03:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0395,Payment failed on checkout with error 502 after v4.2 update.,2026-08-24 22:33:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0396,Tracking number shows delivered but package is nowhere to be found.,2026-08-04 00:28:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0397,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-18 03:06:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0398,Credit card transaction rejected repeatedly on checkout.,2026-08-17 16:39:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0399,Payment failed on checkout with error 502 after v4.2 update.,2026-08-25 06:33:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0400,The new platform version is noticeably snappier and loads instantly.,2026-08-21 09:03:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0401,UPI transaction timed out but money was debited from my bank!,2026-08-28 21:27:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0402,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-17 07:58:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0403,High CPU usage and battery drain while app is open in background.,2026-08-03 11:20:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0404,FaceID login fails on iOS after the latest update.,2026-08-05 11:08:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0405,Credit card transaction rejected repeatedly on checkout.,2026-08-21 05:37:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0406,"Support rep Sarah resolved my billing question within 5 minutes, fantastic service!",2026-08-11 21:38:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0407,High CPU usage and battery drain while app is open in background.,2026-08-10 23:32:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0408,"Cannot complete payment, the buy button is unresponsive.",2026-08-14 12:50:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0409,FaceID login fails on iOS after the latest update.,2026-08-29 05:41:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0410,App crashes every time I try to log in with Google OAuth.,2026-08-19 08:55:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0411,Password reset link is broken and sends me to a blank screen.,2026-08-14 23:56:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0412,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-14 19:52:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0413,"Cannot complete payment, the buy button is unresponsive.",2026-08-13 22:46:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0414,FaceID login fails on iOS after the latest update.,2026-08-11 22:20:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0415,No response to my refund ticket for over two weeks!,2026-08-12 13:43:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0416,UPI transaction timed out but money was debited from my bank!,2026-08-03 11:53:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0417,Tracking number shows delivered but package is nowhere to be found.,2026-08-03 22:06:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0418,Payment failed on checkout with error 502 after v4.2 update.,2026-08-26 13:35:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0419,"Cannot complete payment, the buy button is unresponsive.",2026-08-19 02:21:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0420,"Package arrived in perfect condition, great tracking updates.",2026-08-14 20:55:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0421,Very helpful live chat agent helped reconfigure my subscription.,2026-08-29 08:03:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0422,Payment failed on checkout with error 502 after v4.2 update.,2026-08-20 18:22:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0423,No response to my refund ticket for over two weeks!,2026-08-17 15:09:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Ticketing System,DEMO / SYNTHETIC DATA
+saas_0424,Very helpful live chat agent helped reconfigure my subscription.,2026-08-08 12:22:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Live Chat,DEMO / SYNTHETIC DATA
+saas_0425,FaceID login fails on iOS after the latest update.,2026-08-12 12:48:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0426,Credit card transaction rejected repeatedly on checkout.,2026-08-19 16:51:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0427,The new platform version is noticeably snappier and loads instantly.,2026-08-19 04:39:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0428,FaceID login fails on iOS after the latest update.,2026-08-18 09:38:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0429,Login was seamless and biometrics worked flawlessly.,2026-08-01 14:17:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0430,"Checkout was instant with Apple Pay, very convenient.",2026-08-11 20:00:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0431,UPI transaction timed out but money was debited from my bank!,2026-08-28 13:36:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0432,The new platform version is noticeably snappier and loads instantly.,2026-08-03 13:47:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0433,"Support rep Sarah resolved my billing question within 5 minutes, fantastic service!",2026-08-01 11:47:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0434,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-07 21:26:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0435,Login was seamless and biometrics worked flawlessly.,2026-08-11 14:23:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0436,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-24 19:49:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0437,Payment failed on checkout with error 502 after v4.2 update.,2026-08-20 11:56:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0438,UPI transaction timed out but money was debited from my bank!,2026-08-07 04:03:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0439,"Package arrived in perfect condition, great tracking updates.",2026-08-09 23:42:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0440,"Package arrived in perfect condition, great tracking updates.",2026-08-17 04:28:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0441,"Support rep Sarah resolved my billing question within 5 minutes, fantastic service!",2026-08-09 15:48:00,SaaS Helpdesk & Store Reviews,positive,5,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0442,"Cannot complete payment, the buy button is unresponsive.",2026-08-04 20:27:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0443,Dashboard takes 30 seconds to load analytics reports.,2026-08-11 06:43:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0444,Login was seamless and biometrics worked flawlessly.,2026-08-17 01:42:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0445,High CPU usage and battery drain while app is open in background.,2026-08-02 16:25:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0446,Login was seamless and biometrics worked flawlessly.,2026-08-02 09:13:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0447,FaceID login fails on iOS after the latest update.,2026-08-07 13:48:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,iOS Client,DEMO / SYNTHETIC DATA
+saas_0448,Payment failed on checkout with error 502 after v4.2 update.,2026-08-10 19:07:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0449,"Checkout was instant with Apple Pay, very convenient.",2026-08-17 08:27:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0450,Password reset link is broken and sends me to a blank screen.,2026-08-05 21:34:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0451,Tracking number shows delivered but package is nowhere to be found.,2026-08-18 02:53:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0452,Credit card transaction rejected repeatedly on checkout.,2026-08-03 21:55:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0453,UPI transaction timed out but money was debited from my bank!,2026-08-14 09:29:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0454,Credit card transaction rejected repeatedly on checkout.,2026-08-28 19:36:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0455,"Package arrived in perfect condition, great tracking updates.",2026-08-14 07:40:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0456,Payment failed on checkout with error 502 after v4.2 update.,2026-08-10 12:25:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0457,High CPU usage and battery drain while app is open in background.,2026-08-11 14:51:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0458,Tracking number shows delivered but package is nowhere to be found.,2026-08-16 07:58:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Tracking API,DEMO / SYNTHETIC DATA
+saas_0459,"Cannot complete payment, the buy button is unresponsive.",2026-08-03 22:54:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0460,"Super fast 1-day delivery, driver was polite and punctual.",2026-08-08 22:37:00,SaaS Helpdesk & Store Reviews,positive,5,Logistics Partner A,delivery,Delivery Fleet,DEMO / SYNTHETIC DATA
+saas_0461,Login was seamless and biometrics worked flawlessly.,2026-08-17 11:25:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0462,Payment failed on checkout with error 502 after v4.2 update.,2026-08-24 19:14:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0463,The new platform version is noticeably snappier and loads instantly.,2026-08-06 11:32:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0464,App crashes every time I try to log in with Google OAuth.,2026-08-05 01:32:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0465,UPI transaction timed out but money was debited from my bank!,2026-08-25 20:22:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0466,Payment failed on checkout with error 502 after v4.2 update.,2026-08-28 05:52:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0467,App crashes every time I try to log in with Google OAuth.,2026-08-04 13:16:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0468,The new platform version is noticeably snappier and loads instantly.,2026-08-07 04:09:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0469,The new platform version is noticeably snappier and loads instantly.,2026-08-03 14:49:00,SaaS Helpdesk & Store Reviews,positive,5,Web Portal v3.1,performance,Frontend App,DEMO / SYNTHETIC DATA
+saas_0470,Dashboard takes 30 seconds to load analytics reports.,2026-08-16 23:48:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0471,UPI transaction timed out but money was debited from my bank!,2026-08-26 03:28:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0472,High CPU usage and battery drain while app is open in background.,2026-08-20 05:40:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0473,"Payment went through smoothly, quick checkout experience.",2026-08-12 05:20:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0474,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-15 11:30:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0475,Payment failed on checkout with error 502 after v4.2 update.,2026-08-21 18:50:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0476,UPI transaction timed out but money was debited from my bank!,2026-08-02 20:32:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0477,Credit card transaction rejected repeatedly on checkout.,2026-08-10 23:28:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0478,Login was seamless and biometrics worked flawlessly.,2026-08-02 20:53:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0479,UPI transaction timed out but money was debited from my bank!,2026-08-04 05:55:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0480,Credit card transaction rejected repeatedly on checkout.,2026-08-21 04:32:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0481,UPI transaction timed out but money was debited from my bank!,2026-08-20 02:50:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0482,Dashboard takes 30 seconds to load analytics reports.,2026-08-02 23:58:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,performance,Database Cluster,DEMO / SYNTHETIC DATA
+saas_0483,UPI transaction timed out but money was debited from my bank!,2026-08-21 15:20:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0484,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-17 13:03:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0485,UPI transaction timed out but money was debited from my bank!,2026-08-04 19:45:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA
+saas_0486,Credit card transaction rejected repeatedly on checkout.,2026-08-18 05:11:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0487,Customer support agent hung up after placing me on hold for 40 minutes.,2026-08-09 07:28:00,SaaS Helpdesk & Store Reviews,negative,1,Support Desk,customer_service,Agent Team,DEMO / SYNTHETIC DATA
+saas_0488,"Checkout was instant with Apple Pay, very convenient.",2026-08-18 01:39:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.2,payment,Apple Pay,DEMO / SYNTHETIC DATA
+saas_0489,Login was seamless and biometrics worked flawlessly.,2026-08-12 20:58:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0490,Package was delivered 4 days late and box was crushed.,2026-08-13 22:49:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0491,"Cannot complete payment, the buy button is unresponsive.",2026-08-23 04:03:00,SaaS Helpdesk & Store Reviews,negative,1,Web Portal v3.1,payment,Checkout System,DEMO / SYNTHETIC DATA
+saas_0492,Payment failed on checkout with error 502 after v4.2 update.,2026-08-21 19:04:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0493,Login was seamless and biometrics worked flawlessly.,2026-08-19 06:24:00,SaaS Helpdesk & Store Reviews,positive,5,Mobile App v4.1,login,Auth Service,DEMO / SYNTHETIC DATA
+saas_0494,High CPU usage and battery drain while app is open in background.,2026-08-10 08:54:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,performance,Mobile Client,DEMO / SYNTHETIC DATA
+saas_0495,Payment failed on checkout with error 502 after v4.2 update.,2026-08-28 13:21:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0496,Credit card transaction rejected repeatedly on checkout.,2026-08-22 13:58:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0497,Credit card transaction rejected repeatedly on checkout.,2026-08-22 07:42:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0498,Payment failed on checkout with error 502 after v4.2 update.,2026-08-21 07:05:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,Payment Gateway,DEMO / SYNTHETIC DATA
+saas_0499,Package was delivered 4 days late and box was crushed.,2026-08-14 05:50:00,SaaS Helpdesk & Store Reviews,negative,1,Logistics Partner B,delivery,Delivery Depot,DEMO / SYNTHETIC DATA
+saas_0500,UPI transaction timed out but money was debited from my bank!,2026-08-27 13:42:00,SaaS Helpdesk & Store Reviews,negative,1,Mobile App v4.2,payment,UPI Gateway,DEMO / SYNTHETIC DATA

@@ -1,0 +1,47 @@
+# Environments
+.venv/
+env/
+venv/
+ENV/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# Data and SQLite
+*.sqlite
+*.sqlite3
+*.db
+backend/voiceminer.db
+data/cache/
+*.pkl
+*.npy
+*.pt
+*.bin
+
+# Distribution / Packaging
+build/
+dist/
+*.egg-info/
+
+# Testing and IDE
+.pytest_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.next/
+frontend/build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.local
+.env.production

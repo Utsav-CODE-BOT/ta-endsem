@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./backend/voiceminer.db
+      - EMBEDDING_MODEL=all-MiniLM-L6-v2
+      - SENTIMENT_MODEL=cardiffnlp/twitter-roberta-base-sentiment-latest
+    volumes:
+      - ./data:/app/data
+      - ./experiments:/app/experiments
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped

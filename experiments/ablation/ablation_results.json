@@ -1,0 +1,91 @@
+{
+  "full_system": {
+    "description": "Full System",
+    "top_3_prioritized_issues": [
+      "Mobile App Checkin Errors",
+      "Flight Delays & Missed Connections",
+      "Lost Baggage & Carousel Handling"
+    ],
+    "mean_emerging_score": 0.6877,
+    "priority_distribution": {
+      "CRITICAL": 3,
+      "HIGH": 1,
+      "MEDIUM": 2
+    },
+    "has_temporal": true,
+    "has_sentiment": true,
+    "has_aspects": true,
+    "has_evidence": true
+  },
+  "w_o_temporal": {
+    "description": "W O Temporal",
+    "top_3_prioritized_issues": [
+      "Flight Delays & Missed Connections",
+      "Lost Baggage & Carousel Handling",
+      "Customer Support Hold Times"
+    ],
+    "mean_emerging_score": 0.7548,
+    "priority_distribution": {
+      "CRITICAL": 3,
+      "HIGH": 3
+    },
+    "has_temporal": false,
+    "has_sentiment": true,
+    "has_aspects": true,
+    "has_evidence": true
+  },
+  "w_o_semantic_embeddings": {
+    "description": "W O Semantic Embeddings",
+    "top_3_prioritized_issues": [
+      "Mobile App Checkin Errors",
+      "Flight Delays & Missed Connections",
+      "Lost Baggage & Carousel Handling"
+    ],
+    "mean_emerging_score": 0.6844,
+    "priority_distribution": {
+      "CRITICAL": 3,
+      "HIGH": 1,
+      "MEDIUM": 2
+    },
+    "has_temporal": true,
+    "has_sentiment": true,
+    "has_aspects": false,
+    "has_evidence": false
+  },
+  "w_o_sentiment": {
+    "description": "W O Sentiment",
+    "top_3_prioritized_issues": [
+      "Mobile App Checkin Errors",
+      "Flight Delays & Missed Connections",
+      "Lost Baggage & Carousel Handling"
+    ],
+    "mean_emerging_score": 0.6589,
+    "priority_distribution": {
+      "CRITICAL": 2,
+      "HIGH": 2,
+      "MEDIUM": 2
+    },
+    "has_temporal": true,
+    "has_sentiment": false,
+    "has_aspects": true,
+    "has_evidence": true
+  },
+  "w_o_evidence_retrieval": {
+    "description": "W O Evidence Retrieval",
+    "top_3_prioritized_issues": [
+      "Mobile App Checkin Errors",
+      "Flight Delays & Missed Connections",
+      "Lost Baggage & Carousel Handling"
+    ],
+    "mean_emerging_score": 0.6877,
+    "priority_distribution": {
+      "CRITICAL": 3,
+      "HIGH": 1,
+      "MEDIUM": 2
+    },
+    "has_temporal": true,
+    "has_sentiment": true,
+    "has_aspects": true,
+    "has_evidence": false
+  }
+}
