@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { BarChart3, TrendingUp, Calendar, Layers, ShieldCheck } from 'lucide-react';
 import { api } from '../services/api';
 import { TrendPoint } from '../types';
 import {
@@ -40,50 +39,68 @@ export const AnalyticsPage: React.FC = () => {
     : [];
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
       <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-indigo-400" />
+        <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>
           Customer Voice Analytics & Temporal Dynamics
         </h2>
-        <p className="text-slate-400 text-sm mt-0.5">
+        <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
           Longitudinal trend monitoring, sentiment volume trajectory, and source distribution matrices.
         </p>
       </div>
 
       {loading ? (
-        <div className="p-12 text-center text-slate-400 text-sm">Aggregating temporal analytics...</div>
+        <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+          Aggregating temporal analytics…
+        </div>
       ) : (
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Timeline Volume Trajectory */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-white mb-2">Temporal Feedback Volume & Negative Trajectory</h3>
-            <p className="text-xs text-slate-400 mb-4">Daily total mentions vs negative complaint volume</p>
-            <div className="h-72 w-full">
+          <div style={{
+            background: 'var(--paper)',
+            border: '1px solid var(--border)',
+            borderRadius: '6px',
+            padding: '20px',
+          }}>
+            <h3 style={{ margin: '0 0 2px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+              Temporal Feedback Volume & Negative Trajectory
+            </h3>
+            <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-muted)' }}>
+              Daily total mentions vs negative complaint volume
+            </p>
+
+            <div style={{ height: '260px', width: '100%' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={trends} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                <AreaChart data={trends} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#0d7377" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0d7377" stopOpacity={0.0} />
                     </linearGradient>
                     <linearGradient id="colorNegative" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.5} />
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#c0392b" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#c0392b" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="date" stroke="#64748b" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e8e2d8" vertical={false} />
+                  <XAxis dataKey="date" stroke="var(--border-md)" tick={{ fontSize: 10, fill: 'var(--text-light)' }} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--border-md)" tick={{ fontSize: 10, fill: 'var(--text-light)' }} tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
+                    contentStyle={{
+                      backgroundColor: 'var(--paper)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      color: 'var(--text-main)',
+                    }}
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
                   <Area
                     type="monotone"
                     dataKey="total_volume"
                     name="Total Feedback"
-                    stroke="#6366f1"
+                    stroke="#0d7377"
+                    strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorTotal)"
                   />
@@ -91,7 +108,8 @@ export const AnalyticsPage: React.FC = () => {
                     type="monotone"
                     dataKey="negative_volume"
                     name="Negative Complaints"
-                    stroke="#ef4444"
+                    stroke="#c0392b"
+                    strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorNegative)"
                   />
@@ -101,22 +119,37 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Sentiment by Source Comparison */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <h3 className="text-sm font-semibold text-white mb-2">Sentiment Distribution by Entity / Channel</h3>
-            <p className="text-xs text-slate-400 mb-4">Direct cross-comparison across airlines or SaaS touchpoints</p>
-            <div className="h-64 w-full">
+          <div style={{
+            background: 'var(--paper)',
+            border: '1px solid var(--border)',
+            borderRadius: '6px',
+            padding: '20px',
+          }}>
+            <h3 style={{ margin: '0 0 2px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+              Sentiment Distribution by Entity / Channel
+            </h3>
+            <p style={{ margin: '0 0 14px', fontSize: '12px', color: 'var(--text-muted)' }}>
+              Cross-comparison across airline carriers or touchpoints
+            </p>
+
+            <div style={{ height: '240px', width: '100%' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={sourceData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="source" stroke="#64748b" tick={{ fontSize: 11 }} />
-                  <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
+                <BarChart data={sourceData} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e8e2d8" vertical={false} />
+                  <XAxis dataKey="source" stroke="var(--border-md)" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--border-md)" tick={{ fontSize: 10, fill: 'var(--text-light)' }} tickLine={false} axisLine={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
+                    contentStyle={{
+                      backgroundColor: 'var(--paper)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                    }}
                   />
                   <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  <Bar dataKey="negative" name="Negative" fill="#ef4444" stackId="a" />
-                  <Bar dataKey="neutral" name="Neutral" fill="#64748b" stackId="a" />
-                  <Bar dataKey="positive" name="Positive" fill="#10b981" stackId="a" />
+                  <Bar dataKey="negative" name="Negative" fill="#c0392b" stackId="a" />
+                  <Bar dataKey="neutral" name="Neutral" fill="#9c958e" stackId="a" />
+                  <Bar dataKey="positive" name="Positive" fill="#1e6b4a" stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Download, Printer, ShieldCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { api } from '../services/api';
 import { ReportResponse } from '../types';
 
@@ -29,75 +28,127 @@ export const ReportsPage: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  if (loading) return <div className="p-12 text-center text-slate-400 text-sm">Compiling intelligence audit report...</div>;
-  if (!report) return <div className="p-8 text-slate-400">Failed to generate report.</div>;
+  if (loading) return <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>Compiling intelligence audit report…</div>;
+  if (!report) return <div style={{ padding: '32px', color: 'var(--red)' }}>Failed to generate report.</div>;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header with actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+      {/* Top action bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <FileText className="w-6 h-6 text-indigo-400" />
-            Executive Intelligence & Root-Cause Audit Report
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>
+            Intelligence Audit & Evaluation Report
           </h2>
-          <p className="text-slate-400 text-xs mt-0.5 font-mono">Generated: {report.generated_at}</p>
+          <p style={{ margin: '4px 0 0', fontSize: '12px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+            Generated at: {report.generated_at}
+          </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={handleDownloadJSON}
-            className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-2 border border-slate-700 transition-all"
+            style={{
+              padding: '7px 14px',
+              borderRadius: '4px',
+              border: '1px solid var(--border)',
+              background: 'var(--paper)',
+              color: 'var(--text-main)',
+              fontSize: '12px',
+              fontWeight: 500,
+              cursor: 'pointer',
+            }}
           >
-            <Download className="w-4 h-4" />
-            <span>Download JSON</span>
+            Download JSON
           </button>
           <button
             onClick={handlePrint}
-            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2 shadow-md shadow-indigo-600/30 transition-all"
+            style={{
+              padding: '7px 16px',
+              borderRadius: '4px',
+              border: '1px solid var(--teal)',
+              background: 'var(--teal)',
+              color: '#fff',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
           >
-            <Printer className="w-4 h-4" />
-            <span>Print Report</span>
+            Print Report
           </button>
         </div>
       </div>
 
       {/* Main Printable Document Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 space-y-6 shadow-sm">
-        {/* Executive Summary */}
-        <div className="border-b border-slate-800 pb-5">
-          <h3 className="text-sm font-bold text-indigo-400 uppercase tracking-wider mb-2">1. Executive Summary</h3>
-          <p className="text-sm text-slate-200 leading-relaxed font-sans">{report.executive_summary}</p>
+      <div style={{
+        background: 'var(--paper)',
+        border: '1px solid var(--border)',
+        borderRadius: '6px',
+        padding: '36px 40px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '28px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      }}>
+        {/* Document Header */}
+        <div style={{ borderBottom: '2px solid var(--text-main)', paddingBottom: '16px' }}>
+          <div style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: 'var(--teal)' }}>
+            VoiceMiner Research Platform • Technical Audit
+          </div>
+          <h1 style={{ margin: '8px 0 4px', fontSize: '24px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+            Customer Voice Intelligence & Emerging Issue Report
+          </h1>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+            Systematic NLP pipeline synthesis across multi-source textual streams
+          </div>
         </div>
 
-        {/* Prioritized Emerging Issues */}
-        <div className="border-b border-slate-800 pb-5">
-          <h3 className="text-sm font-bold text-amber-400 uppercase tracking-wider mb-3">
+        {/* Section 1: Executive Summary */}
+        <div>
+          <h3 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-main)' }}>
+            1. Executive Summary
+          </h3>
+          <p style={{ margin: 0, fontSize: '13.5px', lineHeight: 1.7, color: 'var(--text-main)' }}>
+            {report.executive_summary}
+          </p>
+        </div>
+
+        {/* Section 2: Prioritized Emerging Issues */}
+        <div>
+          <h3 style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-main)' }}>
             2. Prioritized Emerging Issues Summary
           </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 uppercase font-mono border-b border-slate-800">
-                <tr>
-                  <th className="p-3">Issue Cluster</th>
-                  <th className="p-3">Emerging Score</th>
-                  <th className="p-3">Priority</th>
-                  <th className="p-3">Growth Rate</th>
-                  <th className="p-3">Negative Ratio</th>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1.5px solid var(--border-md)', color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '11px' }}>
+                  <th style={{ padding: '8px 10px' }}>Issue Cluster</th>
+                  <th style={{ padding: '8px 10px' }}>Emerging Score</th>
+                  <th style={{ padding: '8px 10px' }}>Priority</th>
+                  <th style={{ padding: '8px 10px' }}>Growth Rate</th>
+                  <th style={{ padding: '8px 10px' }}>Negative Ratio</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 text-slate-300">
+              <tbody>
                 {report.emerging_issues_summary.map((iss, i) => (
-                  <tr key={i}>
-                    <td className="p-3 font-semibold text-white">{iss.issue_name}</td>
-                    <td className="p-3 font-mono text-amber-400 font-bold">{iss.emerging_score.toFixed(3)}</td>
-                    <td className="p-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20 uppercase">
+                  <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '10px', fontWeight: 600, color: 'var(--text-main)' }}>{iss.issue_name}</td>
+                    <td style={{ padding: '10px', fontFamily: 'monospace', fontWeight: 700, color: 'var(--amber)' }}>{iss.emerging_score.toFixed(3)}</td>
+                    <td style={{ padding: '10px' }}>
+                      <span style={{
+                        padding: '2px 6px',
+                        borderRadius: '3px',
+                        fontSize: '9.5px',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        background: iss.priority === 'CRITICAL' ? 'var(--red-bg)' : 'var(--amber-bg)',
+                        color: iss.priority === 'CRITICAL' ? 'var(--red)' : 'var(--amber)',
+                        border: `1px solid ${iss.priority === 'CRITICAL' ? '#f5a89e' : '#f0d28a'}`,
+                      }}>
                         {iss.priority}
                       </span>
                     </td>
-                    <td className="p-3 font-mono text-red-400">+{iss.growth_rate_pct}%</td>
-                    <td className="p-3 font-mono">{Math.round(iss.negative_sentiment_ratio * 100)}%</td>
+                    <td style={{ padding: '10px', fontFamily: 'monospace', color: 'var(--red)', fontWeight: 600 }}>+{iss.growth_rate_pct}%</td>
+                    <td style={{ padding: '10px', fontFamily: 'monospace' }}>{Math.round(iss.negative_sentiment_ratio * 100)}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -105,51 +156,62 @@ export const ReportsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Candidate Root Causes */}
-        <div className="border-b border-slate-800 pb-5">
-          <h3 className="text-sm font-bold text-indigo-400 uppercase tracking-wider mb-3">
+        {/* Section 3: Candidate Root Causes */}
+        <div>
+          <h3 style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-main)' }}>
             3. Candidate Root Causes & Empirical Associations
           </h3>
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {report.candidate_root_causes.map((c, i) => (
-              <div key={i} className="p-4 bg-slate-950 rounded-lg border border-slate-800 text-xs">
-                <div className="flex items-center justify-between font-mono mb-1">
-                  <span className="font-bold text-white text-sm">{c.candidate_factor}</span>
-                  <span className="text-indigo-400">Confidence: {Math.round(c.confidence * 100)}% (Lift: {c.lift}x)</span>
+              <div key={i} style={{
+                background: 'var(--cream)',
+                border: '1px solid var(--border)',
+                borderRadius: '4px',
+                padding: '12px 14px',
+                fontSize: '12px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--text-main)' }}>{c.candidate_factor}</span>
+                  <span style={{ fontFamily: 'monospace', color: 'var(--teal)', fontWeight: 600 }}>
+                    Confidence: {Math.round(c.confidence * 100)}% · Lift: {c.lift}×
+                  </span>
                 </div>
-                <div className="text-slate-400 mb-2">Target Issue: <strong>{c.associated_issue}</strong></div>
-                <p className="text-slate-300 italic">"{c.interpretation}"</p>
+                <div style={{ fontSize: '11px', color: 'var(--text-light)', marginBottom: '6px' }}>
+                  Associated with: <strong style={{ color: 'var(--text-muted)' }}>{c.associated_issue}</strong>
+                </div>
+                <p style={{ margin: 0, fontStyle: 'italic', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  "{c.interpretation}"
+                </p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Recommended Investigation Areas */}
-        <div className="border-b border-slate-800 pb-5">
-          <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-wider mb-2">
+        {/* Section 4: Recommended Investigation Areas */}
+        <div>
+          <h3 style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-main)' }}>
             4. Recommended Investigation Areas
           </h3>
-          <ul className="space-y-2 text-xs text-slate-300">
+          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', lineHeight: 1.8, color: 'var(--text-main)' }}>
             {report.recommended_investigation_areas.map((rec, i) => (
-              <li key={i} className="flex items-start space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
-                <span>{rec}</span>
-              </li>
+              <li key={i}>{rec}</li>
             ))}
           </ul>
         </div>
 
-        {/* Methodological Limitations */}
-        <div>
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">
+        {/* Section 5: Methodological Limitations */}
+        <div style={{
+          background: 'var(--cream)',
+          border: '1px solid var(--border)',
+          borderRadius: '4px',
+          padding: '16px 18px',
+        }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: '12.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#7a5a10' }}>
             5. Methodological & Scientific Limitations (Section 3 Restriction)
           </h3>
-          <ul className="space-y-2 text-xs text-slate-400">
+          <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px', lineHeight: 1.7, color: 'var(--text-muted)' }}>
             {report.limitations.map((lim, i) => (
-              <li key={i} className="flex items-start space-x-2">
-                <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-                <span>{lim}</span>
-              </li>
+              <li key={i}>{lim}</li>
             ))}
           </ul>
         </div>

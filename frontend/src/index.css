@@ -1,26 +1,60 @@
 @import "tailwindcss";
 
+/* ─── Design Tokens ────────────────────────────────────── */
+:root {
+  --cream:      #f7f4ef;
+  --paper:      #fdfcf9;
+  --border:     #d9d3c8;
+  --border-md:  #c4bdb0;
+  --text-main:  #1c1917;
+  --text-muted: #6b6560;
+  --text-light: #9c958e;
+  --teal:       #0d7377;
+  --teal-light: #e0f0f0;
+  --teal-mid:   #1a9ea4;
+  --amber:      #c07c2a;
+  --amber-bg:   #fef3e2;
+  --red:        #c0392b;
+  --red-bg:     #fdf0ee;
+  --green:      #1e6b4a;
+  --green-bg:   #e8f5ee;
+  --sidebar-w:  240px;
+}
+
+/* ─── Base Reset ───────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { font-size: 15px; }
+
+body {
+  margin: 0;
+  background-color: var(--cream);
+  color: var(--text-main);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Selection ────────────────────────────────────────── */
+::selection {
+  background: #b2dfdf;
+  color: #082929;
+}
+
+/* ─── Scrollbars ───────────────────────────────────────── */
+::-webkit-scrollbar        { width: 7px; height: 7px; }
+::-webkit-scrollbar-track  { background: var(--cream); }
+::-webkit-scrollbar-thumb  { background: var(--border-md); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #a89e93; }
+
+/* ─── Monospace override ───────────────────────────────── */
+code, kbd, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace !important;
+}
+
+/* ─── Tailwind layer: strip old dark defaults ──────────── */
 @layer base {
-  body {
-    @apply bg-slate-950 text-slate-100 antialiased font-sans selection:bg-indigo-500 selection:text-white;
-  }
-}
-
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #0f172a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  h1, h2, h3, h4, h5 { font-weight: 600; line-height: 1.25; }
+  a { color: var(--teal); text-decoration: none; }
+  a:hover { text-decoration: underline; }
 }

@@ -1,14 +1,4 @@
 import React, { useState } from 'react';
-import {
-  Upload,
-  CheckCircle,
-  AlertCircle,
-  FileSpreadsheet,
-  Database,
-  Layers,
-  ArrowRight,
-  RefreshCw,
-} from 'lucide-react';
 import { api } from '../services/api';
 
 interface DataSourcesPageProps {
@@ -73,48 +63,73 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onDatasetReloa
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">Data Ingestion & Dataset Selection</h2>
-        <p className="text-slate-400 text-sm mt-0.5">
-          Select standard open research datasets or upload custom CSV/JSON multi-source feedback for automated ingestion audit.
+        <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>
+          Data Ingestion & Dataset Selection
+        </h2>
+        <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+          Select standard open research datasets or upload custom customer feedback for automated ingestion audit.
         </p>
       </div>
 
       {/* Dataset Presets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '14px' }}>
         {presets.map((p) => {
           const isSelected = selectedPreset === p.id;
           return (
             <div
               key={p.id}
               onClick={() => !isProcessing && handleSelectPreset(p.id)}
-              className={`p-5 rounded-xl border transition-all cursor-pointer ${
-                isSelected
-                  ? 'bg-slate-900 border-indigo-500 shadow-md shadow-indigo-500/10 ring-1 ring-indigo-500'
-                  : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-              }`}
+              style={{
+                background: isSelected ? 'var(--paper)' : 'var(--cream)',
+                border: isSelected ? '2px solid var(--teal)' : '1px solid var(--border)',
+                borderRadius: '6px',
+                padding: '18px 20px',
+                cursor: isProcessing ? 'not-allowed' : 'pointer',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
             >
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${
-                    p.type === 'REAL BENCHMARK'
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                  }`}
-                >
-                  {p.type}
-                </span>
-                <span className="text-xs text-slate-400 font-mono">{p.records} records</span>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span
+                    style={{
+                      fontSize: '9.5px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      padding: '2px 7px',
+                      borderRadius: '3px',
+                      background: p.type === 'REAL BENCHMARK' ? 'var(--green-bg)' : 'var(--amber-bg)',
+                      color: p.type === 'REAL BENCHMARK' ? 'var(--green)' : 'var(--amber)',
+                      border: `1px solid ${p.type === 'REAL BENCHMARK' ? '#b2d9c5' : '#f0d28a'}`,
+                    }}
+                  >
+                    {p.type}
+                  </span>
+                  <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+                    {p.records} records
+                  </span>
+                </div>
+                <h3 style={{ margin: '4px 0 6px', fontSize: '15px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  {p.name}
+                </h3>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  {p.description}
+                </p>
               </div>
-              <h3 className="text-base font-bold text-white mt-2.5">{p.name}</h3>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">{p.description}</p>
-              <div className="mt-4 flex items-center justify-between text-xs">
-                <span className="text-indigo-400 font-medium flex items-center gap-1">
-                  {isSelected ? 'Currently Loaded' : 'Click to Load & Analyze'}
-                  <ArrowRight className="w-3.5 h-3.5" />
+
+              <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                <span style={{ color: isSelected ? 'var(--teal)' : 'var(--text-muted)', fontWeight: isSelected ? 600 : 400 }}>
+                  {isSelected ? '● Currently Loaded' : 'Click to Load & Analyze →'}
                 </span>
-                {isSelected && <CheckCircle className="w-4 h-4 text-emerald-400" />}
+                {isSelected && (
+                  <span style={{ color: 'var(--green)', fontWeight: 700 }}>Active</span>
+                )}
               </div>
             </div>
           );
@@ -122,74 +137,119 @@ export const DataSourcesPage: React.FC<DataSourcesPageProps> = ({ onDatasetReloa
       </div>
 
       {/* Upload Custom File */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h3 className="text-base font-semibold text-white mb-1">Upload Custom Customer Text Dataset</h3>
-        <p className="text-xs text-slate-400 mb-4">
+      <div style={{
+        background: 'var(--paper)',
+        border: '1px solid var(--border)',
+        borderRadius: '6px',
+        padding: '22px',
+      }}>
+        <h3 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 600, color: 'var(--text-main)' }}>
+          Upload Custom Customer Text Dataset
+        </h3>
+        <p style={{ margin: '0 0 16px', fontSize: '12.5px', color: 'var(--text-muted)' }}>
           Accepts CSV, JSON, or Excel. Automatic schema detection identifies text, timestamps, sources, and sentiment.
         </p>
 
-        <label className="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-colors bg-slate-950/40">
-          <Upload className="w-8 h-8 text-indigo-400 mb-2" />
-          <span className="text-sm font-semibold text-white">Click or drag file to upload</span>
-          <span className="text-xs text-slate-500 mt-1">Supports UTF-8 CSV, JSON, JSONL, XLSX (Max 50MB)</span>
+        <label style={{
+          border: '2px dashed var(--border-md)',
+          borderRadius: '6px',
+          padding: '28px 20px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: isProcessing ? 'not-allowed' : 'pointer',
+          background: 'var(--cream)',
+          transition: 'border-color 0.15s ease',
+        }}>
+          <span style={{ fontSize: '24px', marginBottom: '6px', color: 'var(--teal)' }}>↑</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>
+            Select or drop file to upload
+          </span>
+          <span style={{ fontSize: '11px', color: 'var(--text-light)', marginTop: '3px' }}>
+            Supports UTF-8 CSV, JSON, JSONL, XLSX (Max 50MB)
+          </span>
           <input
             type="file"
             accept=".csv,.json,.jsonl,.xlsx,.xls"
             onChange={handleFileUpload}
             disabled={isProcessing}
-            className="hidden"
+            style={{ display: 'none' }}
           />
         </label>
 
         {isProcessing && (
-          <div className="mt-4 p-4 rounded-lg bg-indigo-950/40 border border-indigo-800/40 flex items-center gap-3">
-            <RefreshCw className="w-5 h-5 text-indigo-400 animate-spin" />
-            <div className="text-xs text-indigo-200">
-              Processing dataset: Cleaning • Embeddings • Transformer Sentiment • Aspect Discovery • Clustering...
-            </div>
+          <div style={{
+            marginTop: '14px',
+            padding: '12px 16px',
+            borderRadius: '4px',
+            background: 'var(--teal-light)',
+            border: '1px solid #9ecfcf',
+            color: 'var(--teal)',
+            fontSize: '12px',
+            fontFamily: 'monospace',
+          }}>
+            ⧗ Ingestion in progress: Cleaning • Embeddings • CardiffNLP Sentiment • Aspects • Semantic Clustering…
           </div>
         )}
 
         {uploadStatus && (
-          <div className="mt-4 p-4 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-200 flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
-            <span>{uploadStatus}</span>
+          <div style={{
+            marginTop: '14px',
+            padding: '10px 14px',
+            borderRadius: '4px',
+            background: uploadStatus.startsWith('Error') ? 'var(--red-bg)' : 'var(--green-bg)',
+            border: `1px solid ${uploadStatus.startsWith('Error') ? '#f5a89e' : '#b2d9c5'}`,
+            color: uploadStatus.startsWith('Error') ? 'var(--red)' : 'var(--green)',
+            fontSize: '12px',
+            fontWeight: 500,
+          }}>
+            {uploadStatus}
           </div>
         )}
       </div>
 
       {/* Ingestion Audit Log */}
       {lastStats && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
-            <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
+        <div style={{
+          background: 'var(--paper)',
+          border: '1px solid var(--border)',
+          borderRadius: '6px',
+          padding: '20px',
+        }}>
+          <h3 style={{ margin: '0 0 14px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
             Data Ingestion & Quality Audit (Section 8 Verification)
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-              <div className="text-xs text-slate-400">Records Uploaded</div>
-              <div className="text-xl font-bold text-white mt-1">{lastStats.records_uploaded}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+            <div style={{ background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: '4px', padding: '12px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Uploaded</div>
+              <div style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'monospace', color: 'var(--text-main)', marginTop: '4px' }}>
+                {lastStats.records_uploaded}
+              </div>
             </div>
-            <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-              <div className="text-xs text-slate-400">Valid Records</div>
-              <div className="text-xl font-bold text-emerald-400 mt-1">{lastStats.valid_records}</div>
+            <div style={{ background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: '4px', padding: '12px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Valid Records</div>
+              <div style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'monospace', color: 'var(--green)', marginTop: '4px' }}>
+                {lastStats.valid_records}
+              </div>
             </div>
-            <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-              <div className="text-xs text-slate-400">Duplicates Removed</div>
-              <div className="text-xl font-bold text-amber-400 mt-1">{lastStats.duplicates_removed}</div>
+            <div style={{ background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: '4px', padding: '12px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Duplicates Removed</div>
+              <div style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'monospace', color: 'var(--amber)', marginTop: '4px' }}>
+                {lastStats.duplicates_removed}
+              </div>
             </div>
-            <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-              <div className="text-xs text-slate-400">Missing Timestamps</div>
-              <div className="text-xl font-bold text-slate-300 mt-1">{lastStats.missing_timestamps}</div>
+            <div style={{ background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: '4px', padding: '12px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Missing Timestamps</div>
+              <div style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'monospace', color: 'var(--text-main)', marginTop: '4px' }}>
+                {lastStats.missing_timestamps}
+              </div>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-800 flex flex-wrap gap-4 text-xs text-slate-400">
-            <div>
-              <strong>Sources Detected:</strong> {lastStats.sources_detected?.join(', ') || 'N/A'}
-            </div>
-            <div>
-              <strong>Languages Detected:</strong> {lastStats.languages_detected?.join(', ') || 'en'}
-            </div>
+
+          <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid var(--border)', display: 'flex', flexWrap: 'wrap', gap: '20px', fontSize: '11.5px', color: 'var(--text-muted)' }}>
+            <div><strong>Sources detected:</strong> {lastStats.sources_detected?.join(', ') || 'N/A'}</div>
+            <div><strong>Languages detected:</strong> {lastStats.languages_detected?.join(', ') || 'en'}</div>
           </div>
         </div>
       )}

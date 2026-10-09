@@ -1,19 +1,65 @@
 import React, { useEffect, useState } from 'react';
-import {
-  MessageSquare,
-  AlertTriangle,
-  Flame,
-  CheckCircle2,
-  TrendingDown,
-  TrendingUp,
-  Tag,
-  Share2,
-  Calendar,
-} from 'lucide-react';
 import { api } from '../services/api';
 import { DashboardSummary } from '../types';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
+/* ─── tiny shared primitives ─────────────────────────── */
+const Card: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => (
+  <div style={{
+    background: 'var(--paper)',
+    border: '1px solid var(--border)',
+    borderRadius: '6px',
+    padding: '20px',
+    ...style,
+  }}>
+    {children}
+  </div>
+);
+
+const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div style={{
+    fontSize: '10px',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    color: 'var(--text-light)',
+    marginBottom: '6px',
+  }}>
+    {children}
+  </div>
+);
+
+const BigNum: React.FC<{ children: React.ReactNode; color?: string }> = ({ children, color }) => (
+  <div style={{
+    fontSize: '30px',
+    fontWeight: 700,
+    color: color || 'var(--text-main)',
+    lineHeight: 1.15,
+    fontFamily: 'JetBrains Mono, monospace',
+  }}>
+    {children}
+  </div>
+);
+
+/* ─── custom tooltip ─────────────────────────────────── */
+const ChartTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: 'var(--paper)',
+      border: '1px solid var(--border)',
+      borderRadius: '4px',
+      padding: '8px 12px',
+      fontSize: '12px',
+      color: 'var(--text-main)',
+    }}>
+      <strong>{label || payload[0]?.name}</strong>: {payload[0]?.value}
+      {payload[0]?.unit}
+    </div>
+  );
+};
+
+/* ─── main component ─────────────────────────────────── */
 export const OverviewDashboard: React.FC<{ onNavigateToEmerging: () => void }> = ({
   onNavigateToEmerging,
 }) => {
@@ -29,21 +75,21 @@ export const OverviewDashboard: React.FC<{ onNavigateToEmerging: () => void }> =
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[400px]">
-        <div className="flex flex-col items-center space-y-3">
-          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-400 text-sm">Loading VoiceMiner Intelligence...</p>
-        </div>
+      <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+        <div style={{ fontSize: '24px', marginBottom: '12px' }}>⧗</div>
+        Loading intelligence data…
       </div>
     );
   }
 
-  if (!data) return <div className="p-8 text-slate-400">Failed to load overview data.</div>;
+  if (!data) {
+    return <div style={{ padding: '32px', color: 'var(--red)' }}>Failed to load overview data.</div>;
+  }
 
   const sentimentData = [
-    { name: 'Negative', value: data.sentiment_distribution.negative, color: '#ef4444' },
-    { name: 'Neutral', value: data.sentiment_distribution.neutral, color: '#64748b' },
-    { name: 'Positive', value: data.sentiment_distribution.positive, color: '#10b981' },
+    { name: 'Negative', value: data.sentiment_distribution.negative, color: '#c0392b' },
+    { name: 'Neutral',  value: data.sentiment_distribution.neutral,  color: '#9c958e' },
+    { name: 'Positive', value: data.sentiment_distribution.positive, color: '#1e6b4a' },
   ];
 
   const emotionData = Object.entries(data.primary_emotions || {}).map(([emotion, count]) => ({
@@ -52,199 +98,201 @@ export const OverviewDashboard: React.FC<{ onNavigateToEmerging: () => void }> =
   }));
 
   return (
-    <div className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+      {/* ── Page header ─────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Intelligence Overview</h2>
-          <p className="text-slate-400 text-sm mt-0.5">
-            Real-time synthesis across multi-source customer feedback, aspects, and temporal issues.
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>
+            Intelligence Overview
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+            Real-time synthesis across multi-source customer feedback, extracted aspects, and temporal issue clusters.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs bg-slate-900 border border-slate-800 px-3.5 py-2 rounded-lg text-slate-300">
-          <Calendar className="w-4 h-4 text-indigo-400" />
-          <span>Observation Window: <strong className="text-white">{data.date_range.start}</strong> to <strong className="text-white">{data.date_range.end}</strong></span>
+        <div style={{
+          fontSize: '12px',
+          color: 'var(--text-muted)',
+          background: 'var(--paper)',
+          border: '1px solid var(--border)',
+          borderRadius: '4px',
+          padding: '6px 12px',
+          fontFamily: 'monospace',
+        }}>
+          Observation window: <strong>{data.date_range.start}</strong> → <strong>{data.date_range.end}</strong>
         </div>
       </div>
 
-      {/* KPI Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Feedback</span>
-            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
-              <MessageSquare className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-3xl font-extrabold text-white tracking-tight">
-              {data.total_feedback.toLocaleString()}
-            </div>
-            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Multi-domain ingestion verified</span>
-            </p>
-          </div>
-        </div>
+      {/* ── KPI row ─────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Negative Sentiment</span>
-            <div className="p-2 rounded-lg bg-red-500/10 text-red-400">
-              <TrendingDown className="w-5 h-5" />
-            </div>
+        {/* 1. Total Feedback */}
+        <Card>
+          <Label>Total Feedback</Label>
+          <BigNum>{data.total_feedback.toLocaleString()}</BigNum>
+          <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--green)', fontWeight: 500 }}>
+            ✓ Multi-domain ingestion verified
           </div>
-          <div className="mt-3">
-            <div className="text-3xl font-extrabold text-red-400 tracking-tight">
-              {data.sentiment_distribution.negative}%
-            </div>
-            <p className="text-xs text-slate-400 mt-1">
-              {data.sentiment_distribution.positive}% positive • {data.sentiment_distribution.neutral}% neutral
-            </p>
-          </div>
-        </div>
+        </Card>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Issue Clusters</span>
-            <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
-              <Share2 className="w-5 h-5" />
-            </div>
+        {/* 2. Negative Sentiment */}
+        <Card>
+          <Label>Negative Sentiment</Label>
+          <BigNum color="var(--red)">{data.sentiment_distribution.negative}%</BigNum>
+          <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-light)' }}>
+            {data.sentiment_distribution.positive}% pos · {data.sentiment_distribution.neutral}% neu
           </div>
-          <div className="mt-3">
-            <div className="text-3xl font-extrabold text-white tracking-tight">
-              {data.active_issues}
-            </div>
-            <p className="text-xs text-slate-400 mt-1">
-              Discovered via SBERT + c-TF-IDF
-            </p>
-          </div>
-        </div>
+        </Card>
 
-        <div
-          onClick={onNavigateToEmerging}
-          className="bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/30 rounded-xl p-5 shadow-sm cursor-pointer hover:border-amber-500/60 transition-all group"
+        {/* 3. Active Issue Clusters */}
+        <Card>
+          <Label>Active Issue Clusters</Label>
+          <BigNum>{data.active_issues}</BigNum>
+          <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-light)' }}>
+            Discovered via SBERT + c-TF-IDF
+          </div>
+        </Card>
+
+        {/* 4. Emerging Issues — clickable */}
+        <Card
+          style={{
+            cursor: 'pointer',
+            borderColor: '#e2a84b',
+            background: 'var(--amber-bg)',
+          }}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Flame className="w-4 h-4 text-amber-500 animate-bounce" />
-              Emerging Issues
-            </span>
-            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 group-hover:bg-amber-500 group-hover:text-black transition-all">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="text-3xl font-extrabold text-amber-400 tracking-tight flex items-baseline gap-2">
-              {data.emerging_issues_count}
-              <span className="text-xs font-semibold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+          <div onClick={onNavigateToEmerging}>
+            <Label>Emerging Issues ↗</Label>
+            <BigNum color="var(--amber)">{data.emerging_issues_count}</BigNum>
+            <div style={{ marginTop: '6px', fontSize: '11px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <span style={{
+                background: '#fbd5d0',
+                color: 'var(--red)',
+                border: '1px solid #f5a89e',
+                borderRadius: '3px',
+                padding: '1px 6px',
+                fontWeight: 600,
+                fontSize: '10px',
+              }}>
                 {data.critical_issues_count} CRITICAL
               </span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Click to inspect →</span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">Click to inspect unusual surges →</p>
           </div>
-        </div>
+        </Card>
       </div>
 
-      {/* Row 2: Sentiment Bar & Aspects */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sentiment Distribution */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">Transformer Sentiment Breakdown</h3>
-          <div className="h-44">
+      {/* ── Row 2: Charts ───────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+
+        {/* Sentiment bar chart */}
+        <Card>
+          <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '14px' }}>
+            Transformer Sentiment Breakdown
+          </div>
+          <div style={{ height: '160px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={sentimentData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <XAxis type="number" unit="%" stroke="#64748b" />
-                <YAxis type="category" dataKey="name" stroke="#94a3b8" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
-                  formatter={(val: any) => [`${val}%`, 'Proportion']}
-                />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                  {sentimentData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+              <BarChart data={sentimentData} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 4 }}>
+                <XAxis type="number" unit="%" tick={{ fontSize: 11, fill: 'var(--text-light)' }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar dataKey="value" radius={[0, 3, 3, 0]} maxBarSize={18}>
+                  {sentimentData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-800 text-center">
-            <div>
-              <div className="text-xs text-slate-400">Negative</div>
-              <div className="text-sm font-bold text-red-400">{data.sentiment_distribution.negative}%</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-400">Neutral</div>
-              <div className="text-sm font-bold text-slate-300">{data.sentiment_distribution.neutral}%</div>
-            </div>
-            <div>
-              <div className="text-xs text-slate-400">Positive</div>
-              <div className="text-sm font-bold text-emerald-400">{data.sentiment_distribution.positive}%</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Extracted Aspects */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-white">Dominant Customer Aspects</h3>
-            <span className="text-xs text-slate-400">Semantic N-gram Normalization</span>
-          </div>
-          <div className="space-y-3">
-            {data.top_aspects.map((asp, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs">
-                <div className="flex items-center space-x-2">
-                  <Tag className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="font-semibold text-slate-200">{asp.aspect}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-24 bg-slate-800 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-indigo-500 h-full rounded-full"
-                      style={{ width: `${Math.min(100, asp.percentage * 2.5)}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-slate-400 font-mono w-12 text-right">{asp.count} ({asp.percentage}%)</span>
-                </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', textAlign: 'center', gap: '4px' }}>
+            {sentimentData.map((s) => (
+              <div key={s.name}>
+                <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>{s.name}</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: s.color }}>{s.value}%</div>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
-        {/* Emotion Spectrum */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-white mb-4">Affective Emotion Spectrum</h3>
-          <div className="h-44">
+        {/* Top Aspects */}
+        <Card>
+          <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '14px', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Dominant Customer Aspects</span>
+            <span style={{ fontWeight: 400, fontSize: '11px', color: 'var(--text-light)' }}>Semantic N-gram</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {data.top_aspects.map((asp, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px' }}>
+                <span style={{ width: '14px', color: 'var(--text-light)', textAlign: 'right', fontFamily: 'monospace', flexShrink: 0 }}>
+                  {idx + 1}.
+                </span>
+                <span style={{ fontWeight: 500, color: 'var(--text-main)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {asp.aspect}
+                </span>
+                <div style={{ width: '70px', background: 'var(--border)', borderRadius: '2px', height: '5px', flexShrink: 0 }}>
+                  <div style={{
+                    width: `${Math.min(100, asp.percentage * 2.5)}%`,
+                    height: '5px',
+                    background: 'var(--teal)',
+                    borderRadius: '2px',
+                  }} />
+                </div>
+                <span style={{ fontSize: '10px', color: 'var(--text-light)', fontFamily: 'monospace', flexShrink: 0, width: '36px', textAlign: 'right' }}>
+                  {asp.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Emotion bar chart */}
+        <Card>
+          <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '14px' }}>
+            Affective Emotion Spectrum
+          </div>
+          <div style={{ height: '160px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={emotionData} margin={{ top: 5, right: 10, left: -20, bottom: 20 }}>
-                <XAxis dataKey="emotion" stroke="#64748b" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" />
-                <YAxis stroke="#64748b" tick={{ fontSize: 10 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px' }}
-                />
-                <Bar dataKey="count" fill="#818cf8" radius={[4, 4, 0, 0]} />
+              <BarChart data={emotionData} margin={{ top: 4, right: 6, left: -20, bottom: 24 }}>
+                <XAxis dataKey="emotion" tick={{ fontSize: 9, fill: 'var(--text-light)' }} angle={-30} textAnchor="end" axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: 'var(--text-light)' }} axisLine={false} tickLine={false} />
+                <Tooltip content={<ChartTooltip />} />
+                <Bar dataKey="count" fill="var(--teal-mid)" radius={[3, 3, 0, 0]} maxBarSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <p className="text-[11px] text-slate-400 mt-2 text-center">
-            Grounded 7-emotion affective inference mapped via anchor cosine similarity.
+          <p style={{ fontSize: '10.5px', color: 'var(--text-light)', marginTop: '6px', textAlign: 'center' }}>
+            7-emotion inference via anchor cosine similarity
           </p>
-        </div>
+        </Card>
       </div>
 
-      {/* Row 3: Sources Distribution */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-white mb-3">Multi-Source / Entity Contribution</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+      {/* ── Row 3: Source distribution ──────────────── */}
+      <Card>
+        <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '14px' }}>
+          Multi-Source / Entity Contribution
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '10px' }}>
           {data.sources.map((src, i) => (
-            <div key={i} className="bg-slate-800/60 border border-slate-700/50 rounded-lg p-3 text-center">
-              <div className="text-xs text-slate-400 font-medium truncate">{src.source}</div>
-              <div className="text-lg font-bold text-white mt-1">{src.count}</div>
-              <div className="text-[11px] text-indigo-400 font-mono">{src.percentage}% of total</div>
+            <div key={i} style={{
+              background: 'var(--cream)',
+              border: '1px solid var(--border)',
+              borderRadius: '5px',
+              padding: '12px 14px',
+              textAlign: 'center',
+            }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {src.source}
+              </div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginTop: '4px', fontFamily: 'monospace' }}>
+                {src.count}
+              </div>
+              <div style={{ fontSize: '10px', color: 'var(--teal)', fontFamily: 'monospace', marginTop: '2px' }}>
+                {src.percentage}% of total
+              </div>
             </div>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

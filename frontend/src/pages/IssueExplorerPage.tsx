@@ -1,15 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Compass,
-  Tag,
-  MessageSquare,
-  Search,
-  ExternalLink,
-  ChevronRight,
-  TrendingDown,
-  Layers,
-  Sparkles,
-} from 'lucide-react';
 import { api } from '../services/api';
 import { IssueClusterItem, IssueDetailResponse } from '../types';
 import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, Tooltip, Cell, ZAxis } from 'recharts';
@@ -17,6 +6,8 @@ import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, Tooltip, Cell
 interface IssueExplorerProps {
   onInvestigateIssue: (issueId: number) => void;
 }
+
+const COLORS = ['#0d7377', '#c07c2a', '#c0392b', '#1e6b4a', '#5b4a8a', '#2b5c8f'];
 
 export const IssueExplorerPage: React.FC<IssueExplorerProps> = ({ onInvestigateIssue }) => {
   const [issues, setIssues] = useState<IssueClusterItem[]>([]);
@@ -50,7 +41,6 @@ export const IssueExplorerPage: React.FC<IssueExplorerProps> = ({ onInvestigateI
     iss.top_terms.some((t) => t.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Scatter plot data for 2D semantic projection
   const scatterData = issues.map((iss) => ({
     x: iss.center_2d[0],
     y: iss.center_2d[1],
@@ -60,58 +50,83 @@ export const IssueExplorerPage: React.FC<IssueExplorerProps> = ({ onInvestigateI
     aspect: iss.primary_aspect,
   }));
 
-  const COLORS = ['#6366f1', '#06b6d4', '#f59e0b', '#ec4899', '#10b981', '#8b5cf6'];
-
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+      {/* Header & Filter */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Semantic Issue Discovery Explorer</h2>
-          <p className="text-slate-400 text-sm mt-0.5">
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>
+            Semantic Issue Discovery Explorer
+          </h2>
+          <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
             Unsupervised semantic clustering via Sentence-BERT embeddings, dimensionality projection, and c-TF-IDF keyword extraction.
           </p>
         </div>
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Filter clusters or terms..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-64"
-          />
-        </div>
+
+        <input
+          type="text"
+          placeholder="Filter clusters or terms…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            padding: '7px 12px',
+            background: 'var(--paper)',
+            border: '1px solid var(--border)',
+            borderRadius: '4px',
+            fontSize: '12px',
+            color: 'var(--text-main)',
+            width: '240px',
+            outline: 'none',
+          }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+        />
       </div>
 
-      {/* 2D Semantic Projection Scatter Visualizer */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-2">
+      {/* 2D Semantic Projection Scatter */}
+      <div style={{
+        background: 'var(--paper)',
+        border: '1px solid var(--border)',
+        borderRadius: '6px',
+        padding: '20px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <div>
-            <h3 className="text-sm font-semibold text-white">2D Semantic Projection Space (PCA / TruncatedSVD)</h3>
-            <p className="text-xs text-slate-400">
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+              2D Semantic Projection Space (PCA / TruncatedSVD)
+            </h3>
+            <p style={{ margin: '2px 0 0', fontSize: '11.5px', color: 'var(--text-muted)' }}>
               Clusters positioned by semantic similarity. Bubble size corresponds to feedback volume.
             </p>
           </div>
-          <span className="text-[11px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 font-mono">
-            {issues.length} Discovered Clusters
+          <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--teal)', background: 'var(--teal-light)', padding: '3px 8px', borderRadius: '4px', border: '1px solid #9ecfcf' }}>
+            {issues.length} Clusters
           </span>
         </div>
-        <div className="h-64 w-full">
+
+        <div style={{ height: '240px', width: '100%' }}>
           <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-              <XAxis type="number" dataKey="x" name="Semantic Dim 1" stroke="#475569" tick={{ fontSize: 10 }} />
-              <YAxis type="number" dataKey="y" name="Semantic Dim 2" stroke="#475569" tick={{ fontSize: 10 }} />
-              <ZAxis type="number" dataKey="z" range={[80, 500]} name="Volume" />
+            <ScatterChart margin={{ top: 15, right: 15, bottom: 15, left: 15 }}>
+              <XAxis type="number" dataKey="x" name="Semantic Dim 1" stroke="var(--border-md)" tick={{ fontSize: 10, fill: 'var(--text-light)' }} tickLine={false} axisLine={false} />
+              <YAxis type="number" dataKey="y" name="Semantic Dim 2" stroke="var(--border-md)" tick={{ fontSize: 10, fill: 'var(--text-light)' }} tickLine={false} axisLine={false} />
+              <ZAxis type="number" dataKey="z" range={[90, 480]} name="Volume" />
               <Tooltip
-                cursor={{ strokeDasharray: '3 3' }}
+                cursor={{ strokeDasharray: '3 3', stroke: 'var(--border-md)' }}
                 content={({ payload }) => {
                   if (payload && payload.length) {
                     const item = payload[0].payload;
                     return (
-                      <div className="bg-slate-950 border border-slate-800 p-2.5 rounded-lg shadow-xl text-xs">
-                        <p className="font-bold text-white">{item.name}</p>
-                        <p className="text-indigo-400 mt-1">Aspect: {item.aspect}</p>
-                        <p className="text-slate-400">Volume: {item.z} records</p>
+                      <div style={{
+                        background: 'var(--paper)',
+                        border: '1px solid var(--border)',
+                        padding: '10px 12px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        color: 'var(--text-main)',
+                      }}>
+                        <div style={{ fontWeight: 700 }}>{item.name}</div>
+                        <div style={{ color: 'var(--teal)', fontSize: '11px', marginTop: '2px' }}>Aspect: {item.aspect}</div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>Volume: {item.z} records</div>
                       </div>
                     );
                   }
@@ -122,7 +137,7 @@ export const IssueExplorerPage: React.FC<IssueExplorerProps> = ({ onInvestigateI
                 name="Issue Clusters"
                 data={scatterData}
                 onClick={(node: any) => handleSelectIssue(node.id)}
-                className="cursor-pointer"
+                cursor="pointer"
               >
                 {scatterData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -134,58 +149,70 @@ export const IssueExplorerPage: React.FC<IssueExplorerProps> = ({ onInvestigateI
       </div>
 
       {/* Main Grid: Clusters List + Detail Inspector */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Issue Cards Column */}
-        <div className="lg:col-span-6 space-y-3">
-          <h3 className="text-sm font-semibold text-white">Discovered Semantic Clusters</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'flex-start' }}>
+        {/* Left: Clusters List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-light)' }}>
+            Discovered Clusters ({filteredIssues.length})
+          </div>
+
           {filteredIssues.map((iss, index) => {
             const isSelected = selectedIssue?.issue_id === iss.issue_id;
+            const dotColor = COLORS[index % COLORS.length];
             return (
               <div
                 key={iss.issue_id}
                 onClick={() => handleSelectIssue(iss.issue_id)}
-                className={`p-4 rounded-xl border transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-slate-900 border-indigo-500 ring-1 ring-indigo-500 shadow-md shadow-indigo-500/10'
-                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
-                }`}
+                style={{
+                  background: isSelected ? 'var(--paper)' : 'var(--cream)',
+                  border: isSelected ? '2px solid var(--teal)' : '1px solid var(--border)',
+                  borderRadius: '6px',
+                  padding: '14px 16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.12s ease',
+                }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    ></span>
-                    <span className="text-[11px] font-mono text-slate-400">Cluster #{iss.issue_id}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: dotColor }} />
+                    <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+                      Cluster #{iss.issue_id}
+                    </span>
                   </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                  <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-muted)' }}>
                     {iss.cluster_size} records ({iss.percentage}%)
                   </span>
                 </div>
 
-                <h4 className="text-sm font-bold text-white mt-2">{iss.name}</h4>
+                <h4 style={{ margin: '8px 0 6px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  {iss.name}
+                </h4>
 
-                {/* Keywords */}
-                <div className="flex flex-wrap gap-1.5 mt-2.5">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', margin: '6px 0 8px' }}>
                   {iss.top_terms.slice(0, 5).map((term, tIdx) => (
                     <span
                       key={tIdx}
-                      className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700/60 font-mono"
+                      style={{
+                        fontSize: '10px',
+                        fontFamily: 'monospace',
+                        background: 'var(--paper)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '3px',
+                        padding: '1px 6px',
+                        color: 'var(--text-muted)',
+                      }}
                     >
                       {term}
                     </span>
                   ))}
                 </div>
 
-                {/* Sentiment Bar */}
-                <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                  <span className="flex items-center gap-1 text-red-400">
-                    <TrendingDown className="w-3.5 h-3.5" />
+                <div style={{ paddingTop: '8px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <span style={{ color: 'var(--red)', fontWeight: 500 }}>
                     {iss.sentiment_distribution.negative}% Negative
                   </span>
-                  <span className="text-indigo-400 flex items-center gap-1 font-medium">
-                    View Exemplars
-                    <ChevronRight className="w-3.5 h-3.5" />
+                  <span style={{ color: 'var(--teal)', fontWeight: 600 }}>
+                    Inspect →
                   </span>
                 </div>
               </div>
@@ -193,34 +220,66 @@ export const IssueExplorerPage: React.FC<IssueExplorerProps> = ({ onInvestigateI
           })}
         </div>
 
-        {/* Selected Issue Detail & Exemplars */}
-        <div className="lg:col-span-6">
+        {/* Right: Selected Detail & Exemplars */}
+        <div>
           {selectedIssue ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5 sticky top-6">
-              <div className="flex items-start justify-between">
+            <div style={{
+              background: 'var(--paper)',
+              border: '1px solid var(--border)',
+              borderRadius: '6px',
+              padding: '20px',
+              position: 'sticky',
+              top: '72px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
                 <div>
-                  <span className="text-xs font-mono text-indigo-400 uppercase tracking-wider font-semibold">
-                    Cluster Details • #{selectedIssue.issue_id}
+                  <span style={{ fontSize: '10px', fontFamily: 'monospace', color: 'var(--teal)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    Cluster #{selectedIssue.issue_id}
                   </span>
-                  <h3 className="text-lg font-bold text-white mt-1">{selectedIssue.name}</h3>
+                  <h3 style={{ margin: '4px 0 0', fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>
+                    {selectedIssue.name}
+                  </h3>
                 </div>
                 <button
                   onClick={() => onInvestigateIssue(selectedIssue.issue_id)}
-                  className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all"
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    border: '1px solid var(--teal)',
+                    background: 'var(--teal)',
+                    color: '#fff',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Root Cause Audit
+                  Root Cause Audit →
                 </button>
               </div>
 
-              {/* c-TF-IDF Distinctive Terms */}
+              {/* Distinctive Keywords */}
               <div>
-                <span className="text-xs text-slate-400 font-semibold uppercase">c-TF-IDF Distinctive Keywords:</span>
-                <div className="flex flex-wrap gap-1.5 mt-2">
+                <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-light)', marginBottom: '6px' }}>
+                  c-TF-IDF Distinctive Keywords
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                   {selectedIssue.top_terms.map((term, i) => (
                     <span
                       key={i}
-                      className="text-xs bg-indigo-950/60 text-indigo-300 border border-indigo-800/50 px-2.5 py-1 rounded-md font-mono"
+                      style={{
+                        fontSize: '11px',
+                        fontFamily: 'monospace',
+                        background: 'var(--teal-light)',
+                        color: 'var(--teal)',
+                        border: '1px solid #9ecfcf',
+                        borderRadius: '3px',
+                        padding: '2px 8px',
+                        fontWeight: 500,
+                      }}
                     >
                       {term}
                     </span>
@@ -228,24 +287,30 @@ export const IssueExplorerPage: React.FC<IssueExplorerProps> = ({ onInvestigateI
                 </div>
               </div>
 
-              {/* Representative Customer Feedback Statements */}
+              {/* Exemplar Feedback */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-slate-400 font-semibold uppercase flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-indigo-400" />
-                    Central Exemplar Feedback (Closest to Centroid)
-                  </span>
+                <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-light)', marginBottom: '8px' }}>
+                  Central Exemplar Feedback (Closest to Centroid)
                 </div>
-                <div className="space-y-2.5">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {selectedIssue.exemplars.map((ex, i) => (
                     <div
                       key={i}
-                      className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 leading-relaxed"
+                      style={{
+                        background: 'var(--cream)',
+                        border: '1px solid var(--border)',
+                        borderRadius: '4px',
+                        padding: '10px 12px',
+                        fontSize: '12px',
+                        lineHeight: 1.6,
+                      }}
                     >
-                      <p className="italic">"{ex.text}"</p>
-                      <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                      <p style={{ margin: 0, fontStyle: 'italic', color: 'var(--text-main)' }}>
+                        "{ex.text}"
+                      </p>
+                      <div style={{ marginTop: '6px', paddingTop: '5px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
                         <span>Record #{ex.index}</span>
-                        <span className="text-indigo-400">Cosine Sim to Center: {ex.similarity}</span>
+                        <span style={{ color: 'var(--teal)', fontWeight: 600 }}>Sim: {ex.similarity}</span>
                       </div>
                     </div>
                   ))}
@@ -253,7 +318,7 @@ export const IssueExplorerPage: React.FC<IssueExplorerProps> = ({ onInvestigateI
               </div>
             </div>
           ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center text-slate-400 text-sm">
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--border)', borderRadius: '6px', padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
               Select an issue cluster to inspect representative feedback.
             </div>
           )}

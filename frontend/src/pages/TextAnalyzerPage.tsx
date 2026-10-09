@@ -1,31 +1,36 @@
 import React, { useState } from 'react';
-import {
-  FileSearch,
-  Sparkles,
-  TrendingDown,
-  TrendingUp,
-  Tag,
-  Share2,
-  AlertCircle,
-  CheckCircle2,
-  ArrowRight,
-} from 'lucide-react';
 import { api } from '../services/api';
 import { TextAnalyzeResponse } from '../types';
 
+const SAMPLES = [
+  'Payment failed three times at checkout with error 502 right after the latest app update!',
+  'Baggage was lost on flight 492 and customer service representative hung up on me.',
+  'Flight was delayed 6 hours on the tarmac with zero water or food provided.',
+  'Amazing experience! Boarding was seamless and flight attendants were wonderful.',
+];
+
+const SENTIMENT_COLORS: Record<string, string> = {
+  negative: 'var(--red)',
+  positive: 'var(--green)',
+  neutral: 'var(--text-muted)',
+};
+
+const Card: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => (
+  <div style={{ background: 'var(--paper)', border: '1px solid var(--border)', borderRadius: '6px', padding: '18px 20px', ...style }}>
+    {children}
+  </div>
+);
+
+const SubLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div style={{ fontSize: '9.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-light)', marginBottom: '6px' }}>
+    {children}
+  </div>
+);
+
 export const TextAnalyzerPage: React.FC = () => {
-  const [inputText, setInputText] = useState(
-    'Payment failed three times at checkout with error 502 right after the latest app update!'
-  );
+  const [inputText, setInputText] = useState(SAMPLES[0]);
   const [result, setResult] = useState<TextAnalyzeResponse | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const sampleQueries = [
-    'Payment failed three times at checkout with error 502 right after the latest app update!',
-    'Baggage was lost on flight 492 and customer service representative hung up on me.',
-    'Flight was delayed 6 hours on the tarmac with zero water or food provided.',
-    'Amazing experience! Boarding was seamless and flight attendants were wonderful.',
-  ];
 
   const handleAnalyze = async () => {
     if (!inputText.trim()) return;
@@ -41,40 +46,67 @@ export const TextAnalyzerPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+
+      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-          <FileSearch className="w-6 h-6 text-indigo-400" />
-          Real-Time Customer Text & Root-Cause Analyzer
+        <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>
+          Real-Time Customer Text Analyzer
         </h2>
-        <p className="text-slate-400 text-sm mt-0.5">
-          Paste arbitrary customer feedback to test real-time inference across sentiment, 7-emotion spectrum, aspect extraction, semantic cluster matching, and evidence retrieval.
+        <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+          Paste arbitrary customer feedback to test live inference across sentiment, 7-emotion spectrum, aspect extraction, semantic cluster matching, and evidence retrieval.
         </p>
       </div>
 
-      {/* Input Form */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-        <label className="text-xs font-semibold text-slate-300 block uppercase">
-          Customer Text Input:
+      {/* Input card */}
+      <Card>
+        <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          Customer Text Input
         </label>
         <textarea
-          rows={3}
+          rows={4}
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
-          placeholder="Paste customer review, complaint, or support message here..."
-          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 leading-relaxed font-sans"
+          placeholder="Paste customer review, complaint, or support message here…"
+          style={{
+            width: '100%',
+            resize: 'vertical',
+            background: 'var(--cream)',
+            border: '1px solid var(--border)',
+            borderRadius: '4px',
+            padding: '10px 12px',
+            fontSize: '13.5px',
+            color: 'var(--text-main)',
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.6,
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--teal)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
         />
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <span>Try sample queries:</span>
-            {sampleQueries.map((q, idx) => (
+        <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '11.5px', color: 'var(--text-light)' }}>Try a sample:</span>
+            {SAMPLES.map((q, idx) => (
               <button
                 key={idx}
                 onClick={() => setInputText(q)}
-                className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors text-[11px]"
+                style={{
+                  fontSize: '11px',
+                  padding: '3px 9px',
+                  border: '1px solid var(--border)',
+                  borderRadius: '3px',
+                  background: 'var(--cream)',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  transition: 'background 0.1s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = '#ede8e1')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--cream)')}
               >
-                Sample {idx + 1}
+                S{idx + 1}
               </button>
             ))}
           </div>
@@ -82,135 +114,146 @@ export const TextAnalyzerPage: React.FC = () => {
           <button
             onClick={handleAnalyze}
             disabled={loading}
-            className="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition-all"
+            style={{
+              padding: '9px 20px',
+              background: loading ? '#9ecfcf' : 'var(--teal)',
+              border: 'none',
+              borderRadius: '4px',
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '7px',
+              transition: 'background 0.12s',
+            }}
+            onMouseEnter={(e) => { if (!loading) (e.currentTarget.style.background = '#0a5f62'); }}
+            onMouseLeave={(e) => { if (!loading) (e.currentTarget.style.background = 'var(--teal)'); }}
           >
-            {loading ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-            <span>Analyze Customer Voice</span>
+            {loading ? '⧗ Analyzing…' : '⌖ Analyze Customer Voice'}
           </button>
         </div>
-      </div>
+      </Card>
 
-      {/* Result Cards */}
+      {/* Results */}
       {result && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Sentiment */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-              <span className="text-xs font-semibold text-slate-400 uppercase">Transformer Sentiment</span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span
-                  className={`text-2xl font-black capitalize ${
-                    result.sentiment.label === 'negative'
-                      ? 'text-red-400'
-                      : result.sentiment.label === 'positive'
-                      ? 'text-emerald-400'
-                      : 'text-slate-300'
-                  }`}
-                >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+          {/* Row 1: Sentiment / Emotion / Aspects */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <Card>
+              <SubLabel>Transformer Sentiment</SubLabel>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '4px' }}>
+                <span style={{ fontSize: '24px', fontWeight: 700, textTransform: 'capitalize', color: SENTIMENT_COLORS[result.sentiment.label] || 'var(--text-main)' }}>
                   {result.sentiment.label}
                 </span>
-                <span className="text-xs text-slate-400 font-mono">
-                  Confidence: {Math.round(result.sentiment.score * 100)}%
+                <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+                  {Math.round(result.sentiment.score * 100)}% conf.
                 </span>
               </div>
-            </div>
+            </Card>
 
-            {/* Emotion */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-              <span className="text-xs font-semibold text-slate-400 uppercase">Affective Emotion</span>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-2xl font-black text-amber-400 capitalize">
+            <Card>
+              <SubLabel>Affective Emotion</SubLabel>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '4px' }}>
+                <span style={{ fontSize: '24px', fontWeight: 700, textTransform: 'capitalize', color: 'var(--amber)' }}>
                   {result.emotion.primary_emotion}
                 </span>
-                <span className="text-xs text-slate-400 font-mono">
-                  Score: {Math.round(result.emotion.score * 100)}%
+                <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+                  {Math.round(result.emotion.score * 100)}%
                 </span>
               </div>
-            </div>
+            </Card>
 
-            {/* Extracted Aspects */}
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-              <span className="text-xs font-semibold text-slate-400 uppercase">Extracted Aspects</span>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {result.aspects.length > 0 ? (
-                  result.aspects.map((asp, i) => (
-                    <span
-                      key={i}
-                      className="text-xs px-2 py-0.5 rounded bg-indigo-950/80 text-indigo-300 border border-indigo-800/60 font-mono font-semibold"
-                    >
-                      {asp.aspect} ({asp.matched_term})
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-xs text-slate-500">General Aspect</span>
+            <Card>
+              <SubLabel>Extracted Aspects</SubLabel>
+              <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                {result.aspects.length > 0 ? result.aspects.map((asp, i) => (
+                  <span key={i} style={{
+                    fontSize: '11.5px',
+                    padding: '2px 8px',
+                    borderRadius: '3px',
+                    background: 'var(--teal-light)',
+                    color: 'var(--teal)',
+                    border: '1px solid #9ecfcf',
+                    fontFamily: 'monospace',
+                    fontWeight: 600,
+                  }}>
+                    {asp.aspect}
+                  </span>
+                )) : (
+                  <span style={{ fontSize: '12px', color: 'var(--text-light)' }}>General aspect</span>
                 )}
               </div>
-            </div>
+            </Card>
           </div>
 
-          {/* Matched Semantic Issue & Candidate Cause */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1.5">
-                <Share2 className="w-4 h-4 text-cyan-400" />
-                Matched Semantic Issue Cluster
-              </span>
+          {/* Row 2: Matched cluster + Candidate cause */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <Card>
+              <SubLabel>Matched Semantic Issue Cluster</SubLabel>
               {result.matched_issue ? (
                 <div>
-                  <h4 className="text-base font-bold text-white">{result.matched_issue.name}</h4>
-                  <div className="mt-2 flex items-center gap-3 text-xs text-slate-400 font-mono">
-                    <span>Cluster ID: #{result.matched_issue.issue_id}</span>
+                  <h4 style={{ margin: '6px 0 4px', fontSize: '14.5px', fontWeight: 600, color: 'var(--text-main)' }}>
+                    {result.matched_issue.name}
+                  </h4>
+                  <div style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-light)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <span>Cluster #{result.matched_issue.issue_id}</span>
                     <span>Similarity: {result.matched_issue.similarity}</span>
                     <span>Aspect: {result.matched_issue.primary_aspect}</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">No active cluster matched.</p>
+                <p style={{ margin: '6px 0 0', fontSize: '12.5px', color: 'var(--text-light)' }}>No active cluster matched.</p>
               )}
-            </div>
+            </Card>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase flex items-center gap-1.5">
-                <AlertCircle className="w-4 h-4 text-amber-400" />
-                Suspected Associated Factor
-              </span>
+            <Card>
+              <SubLabel>Suspected Associated Factor</SubLabel>
               {result.candidate_cause ? (
                 <div>
-                  <h4 className="text-base font-bold text-amber-400">{result.candidate_cause.candidate_factor}</h4>
-                  <div className="mt-2 flex items-center gap-3 text-xs text-slate-400 font-mono">
+                  <h4 style={{ margin: '6px 0 4px', fontSize: '14.5px', fontWeight: 600, color: 'var(--amber)' }}>
+                    {result.candidate_cause.candidate_factor}
+                  </h4>
+                  <div style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-light)', marginBottom: '8px', display: 'flex', gap: '12px' }}>
                     <span>Confidence: {Math.round(result.candidate_cause.confidence * 100)}%</span>
-                    <span>Lift: {result.candidate_cause.lift}x</span>
+                    <span>Lift: {result.candidate_cause.lift}×</span>
                   </div>
-                  <p className="text-xs text-slate-300 mt-2 italic bg-slate-950 p-2.5 rounded border border-slate-800">
+                  <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', background: 'var(--cream)', padding: '7px 10px', borderRadius: '3px', border: '1px solid var(--border)', lineHeight: 1.6 }}>
                     "{result.candidate_cause.interpretation}"
                   </p>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">No candidate factor associated with this cluster yet.</p>
+                <p style={{ margin: '6px 0 0', fontSize: '12.5px', color: 'var(--text-light)' }}>No candidate factor found for this cluster.</p>
               )}
-            </div>
+            </Card>
           </div>
 
-          {/* Similar Evidence Statements */}
+          {/* Row 3: Similar evidence */}
           {result.similar_evidence.length > 0 && (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-              <h3 className="text-sm font-semibold text-white">Nearest Historical Customer Feedback</h3>
-              <div className="space-y-2">
+            <Card>
+              <h3 style={{ margin: '0 0 12px', fontSize: '13.5px', fontWeight: 700, color: 'var(--text-main)' }}>
+                Nearest Historical Feedback (Cosine Similarity)
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {result.similar_evidence.map((ev, i) => (
-                  <div key={i} className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs">
-                    <p className="text-slate-200 italic">"{ev.text}"</p>
-                    <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-                      <span>Source: {ev.source} • Date: {ev.date}</span>
-                      <span className="text-indigo-400">Cosine Similarity: {ev.similarity}</span>
+                  <div key={i} style={{
+                    background: 'var(--cream)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '4px',
+                    padding: '10px 12px',
+                    fontSize: '12.5px',
+                  }}>
+                    <p style={{ margin: 0, fontStyle: 'italic', color: 'var(--text-main)', lineHeight: 1.6 }}>"{ev.text}"</p>
+                    <div style={{ marginTop: '6px', paddingTop: '5px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+                      <span>Source: {ev.source} · Date: {ev.date}</span>
+                      <span style={{ color: 'var(--teal)', fontWeight: 600 }}>cos = {ev.similarity}</span>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
           )}
         </div>
       )}

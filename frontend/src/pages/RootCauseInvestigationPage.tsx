@@ -1,19 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import {
-  SearchCheck,
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
-  TrendingUp,
-  Share2,
-  Tag,
-  AlertTriangle,
-  Layers,
-  ChevronDown,
-  Info,
-  Calendar,
-  ExternalLink,
-} from 'lucide-react';
 import { api } from '../services/api';
 import {
   IssueClusterItem,
@@ -25,6 +10,18 @@ import {
 interface RootCauseProps {
   initialIssueId?: number | null;
 }
+
+const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <h3 style={{ margin: '0 0 14px', fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
+    {children}
+  </h3>
+);
+
+const MiniLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span style={{ fontSize: '9.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-light)' }}>
+    {children}
+  </span>
+);
 
 export const RootCauseInvestigationPage: React.FC<RootCauseProps> = ({ initialIssueId }) => {
   const [issues, setIssues] = useState<IssueClusterItem[]>([]);
@@ -39,25 +36,20 @@ export const RootCauseInvestigationPage: React.FC<RootCauseProps> = ({ initialIs
     api.getIssues()
       .then((data) => {
         setIssues(data);
-        const targetId = initialIssueId !== undefined && initialIssueId !== null ? initialIssueId : (data[0]?.issue_id || 0);
+        const targetId = (initialIssueId !== undefined && initialIssueId !== null)
+          ? initialIssueId
+          : (data[0]?.issue_id || 0);
         setSelectedIssueId(targetId);
         loadIssueResearch(targetId);
       })
       .catch(console.error);
-
     api.getGraph().then(setGraphData).catch(console.error);
   }, [initialIssueId]);
 
   const loadIssueResearch = (issueId: number) => {
     setLoading(true);
-    Promise.all([
-      api.getRootCauses(issueId),
-      api.getEvidence(issueId),
-    ])
-      .then(([hyps, ev]) => {
-        setHypotheses(hyps);
-        setEvidence(ev);
-      })
+    Promise.all([api.getRootCauses(issueId), api.getEvidence(issueId)])
+      .then(([hyps, ev]) => { setHypotheses(hyps); setEvidence(ev); })
       .catch(console.error)
       .finally(() => setLoading(false));
   };
@@ -69,254 +61,294 @@ export const RootCauseInvestigationPage: React.FC<RootCauseProps> = ({ initialIs
 
   const currentIssue = issues.find((iss) => iss.issue_id === selectedIssueId) || issues[0];
 
+  const EV_TABS = [
+    { id: 'supporting',    label: `Supporting (${evidence?.stats.supporting_count || 0})`,    color: 'var(--red)' },
+    { id: 'contradicting', label: `Contradicting (${evidence?.stats.contradicting_count || 0})`, color: 'var(--green)' },
+    { id: 'neutral',       label: `Neutral (${evidence?.stats.neutral_count || 0})`,           color: 'var(--text-muted)' },
+  ] as const;
+
   return (
-    <div className="space-y-6">
-      {/* Header with Issue Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+
+      {/* ── Header ───────────────────────────────────────── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <SearchCheck className="w-6 h-6 text-indigo-400" />
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text-main)' }}>
             Root-Cause & Factor Association Investigation
           </h2>
-          <p className="text-slate-400 text-sm mt-0.5">
-            Empirical factor attribution using Lift, Pointwise Mutual Information (PMI), and semantic evidence retrieval.
+          <p style={{ margin: '5px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+            Empirical factor attribution using Statistical Lift, Pointwise Mutual Information (PMI), and semantic evidence retrieval.
           </p>
         </div>
 
-        {/* Issue Selector Dropdown */}
-        <div className="flex items-center space-x-2 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5">
-          <span className="text-xs text-slate-400 font-medium">Investigating Issue:</span>
+        {/* Issue selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--paper)', border: '1px solid var(--border)', borderRadius: '4px', padding: '6px 12px', fontSize: '13px' }}>
+          <span style={{ color: 'var(--text-light)', fontWeight: 500 }}>Issue:</span>
           <select
             value={selectedIssueId}
             onChange={(e) => handleIssueChange(Number(e.target.value))}
-            className="bg-transparent text-sm font-semibold text-white focus:outline-none cursor-pointer"
+            style={{ background: 'transparent', border: 'none', fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', outline: 'none' }}
           >
             {issues.map((iss) => (
-              <option key={iss.issue_id} value={iss.issue_id} className="bg-slate-900 text-white">
-                #{iss.issue_id} - {iss.name}
+              <option key={iss.issue_id} value={iss.issue_id}>
+                #{iss.issue_id} – {iss.name}
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Critical Scientific Guardrail Notice (Section 3 Restriction) */}
-      <div className="bg-amber-950/20 border border-amber-500/30 rounded-xl p-4 flex items-start space-x-3">
-        <Info className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
-        <div className="text-xs text-amber-200/90 leading-relaxed">
-          <strong className="text-amber-300 font-semibold">Scientific Methodology Guardrail:</strong> In strict compliance with causal inference standards, discovered factors represent <em>empirical statistical associations</em> and <em>temporal precedence</em>. VoiceMiner presents evidence-supported candidate root causes for operational verification; it does not claim unverified causal determinism.
-        </div>
+      {/* ── Scientific guardrail notice ───────────────────── */}
+      <div style={{
+        background: '#fefaf0',
+        border: '1px solid #e8c67a',
+        borderRadius: '5px',
+        padding: '12px 16px',
+        fontSize: '12px',
+        color: '#7a5a10',
+        lineHeight: 1.6,
+      }}>
+        <strong>⚠ Scientific Methodology Guardrail:</strong> Discovered factors represent <em>empirical statistical associations</em> and <em>temporal precedence</em>. VoiceMiner presents candidate root causes for operational verification; it does not claim causal determinism.
       </div>
 
-      {/* Row 1: Candidate Causes & Scientific Attribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Hypotheses List */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <span>Candidate Root-Cause Factors</span>
-              <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">
-                {hypotheses.length} Identified
-              </span>
+      {/* ── Row 1: Hypotheses + Graph ─────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '7fr 5fr', gap: '16px', alignItems: 'flex-start' }}>
+
+        {/* Hypotheses */}
+        <div style={{ background: 'var(--paper)', border: '1px solid var(--border)', borderRadius: '6px', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>
+              Candidate Root-Cause Factors
             </h3>
-            <span className="text-xs text-slate-400 font-mono">Ranked by Confidence</span>
+            <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+              {hypotheses.length} identified · ranked by confidence
+            </span>
           </div>
 
           {loading ? (
-            <div className="p-8 text-center text-slate-400 text-xs">Mining candidate factors and calculating Lift/PMI...</div>
+            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+              Mining candidate factors…
+            </div>
           ) : hypotheses.length === 0 ? (
-            <div className="p-8 bg-slate-900 border border-slate-800 rounded-xl text-center text-slate-400 text-xs">
-              No strong statistical factor association crossed the significance threshold for this issue.
+            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+              No strong statistical factor associations crossed the significance threshold.
             </div>
           ) : (
-            hypotheses.map((h, i) => (
-              <div
-                key={h.id || i}
-                className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3 shadow-sm hover:border-slate-700 transition-all"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase">
-                        {h.factor_type}
-                      </span>
-                      <span className="text-xs text-slate-400 font-mono">Temporal: {h.temporal_relationship}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {hypotheses.map((h, i) => (
+                <div key={h.id || i} style={{
+                  border: '1px solid var(--border)',
+                  borderRadius: '5px',
+                  padding: '14px 16px',
+                  background: 'var(--cream)',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
+                        <span style={{
+                          fontSize: '9.5px', fontWeight: 700, textTransform: 'uppercase',
+                          padding: '2px 6px', borderRadius: '3px',
+                          background: 'var(--teal-light)', color: 'var(--teal)',
+                          border: '1px solid #9ecfcf',
+                        }}>
+                          {h.factor_type}
+                        </span>
+                        <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+                          Temporal: {h.temporal_relationship}
+                        </span>
+                      </div>
+                      <h4 style={{ margin: 0, fontSize: '14.5px', fontWeight: 600, color: 'var(--text-main)' }}>
+                        {h.candidate_factor}
+                      </h4>
                     </div>
-                    <h4 className="text-base font-bold text-white mt-1.5">{h.candidate_factor}</h4>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[11px] text-slate-400">Confidence</div>
-                    <div className="text-xl font-black text-indigo-400 font-mono">
-                      {Math.round(h.confidence * 100)}%
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: '10px', color: 'var(--text-light)' }}>Confidence</div>
+                      <div style={{ fontSize: '20px', fontWeight: 700, fontFamily: 'monospace', color: 'var(--teal)' }}>
+                        {Math.round(h.confidence * 100)}%
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Metrics Badges: Lift, PMI, Co-occurrences */}
-                <div className="grid grid-cols-3 gap-2 py-2 px-3 bg-slate-950 rounded-lg border border-slate-800/80 text-xs font-mono">
-                  <div>
-                    <span className="text-slate-500 block text-[10px]">Statistical Lift</span>
-                    <strong className="text-emerald-400">{h.lift}x</strong>
+                  {/* Metrics */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 1fr',
+                    gap: '6px',
+                    marginTop: '10px',
+                    background: 'var(--paper)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '4px',
+                    padding: '8px 10px',
+                    fontSize: '12px',
+                    fontFamily: 'monospace',
+                  }}>
+                    <div>
+                      <MiniLabel>Lift</MiniLabel>
+                      <div style={{ fontWeight: 700, color: 'var(--green)' }}>{h.lift}×</div>
+                    </div>
+                    <div>
+                      <MiniLabel>PMI</MiniLabel>
+                      <div style={{ fontWeight: 700, color: 'var(--teal)' }}>{h.pmi}</div>
+                    </div>
+                    <div>
+                      <MiniLabel>Co-occurrences</MiniLabel>
+                      <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{h.co_occurrence_count} / {h.total_mention_count}</div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-slate-500 block text-[10px]">PMI Score</span>
-                    <strong className="text-indigo-300">{h.pmi}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block text-[10px]">Co-occurrences</span>
-                    <strong className="text-slate-200">{h.co_occurrence_count} / {h.total_mention_count}</strong>
-                  </div>
-                </div>
 
-                <p className="text-xs text-slate-300 bg-slate-950/60 p-3 rounded border border-slate-800 leading-relaxed italic">
-                  "{h.interpretation}"
-                </p>
-              </div>
-            ))
+                  <p style={{
+                    margin: '10px 0 0',
+                    fontSize: '12px',
+                    color: 'var(--text-muted)',
+                    fontStyle: 'italic',
+                    background: 'var(--paper)',
+                    padding: '8px 10px',
+                    borderRadius: '3px',
+                    border: '1px solid var(--border)',
+                    lineHeight: 1.6,
+                  }}>
+                    "{h.interpretation}"
+                  </p>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Association Graph Snapshot */}
-        <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                <Share2 className="w-4 h-4 text-indigo-400" />
-                NetworkX Knowledge & Association Graph
-              </h3>
-              <span className="text-[10px] text-slate-400 font-mono">
-                {graphData?.total_nodes || 0} Nodes • {graphData?.total_edges || 0} Edges
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Structural topology mapping candidate factors, aspect dependencies, and discovered issue clusters.
-            </p>
+        {/* Graph snapshot */}
+        <div style={{ background: 'var(--paper)', border: '1px solid var(--border)', borderRadius: '6px', padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>
+              Association Graph Snapshot
+            </h3>
+            <span style={{ fontSize: '10.5px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+              {graphData?.total_nodes || 0}N · {graphData?.total_edges || 0}E
+            </span>
+          </div>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '0 0 12px' }}>
+            NetworkX topology mapping candidate factors, aspect dependencies, and issue clusters.
+          </p>
 
-            {/* Interactive SVG Network Graph */}
-            <div className="h-64 w-full bg-slate-950 border border-slate-800 rounded-lg relative overflow-hidden flex items-center justify-center p-4">
-              <svg className="w-full h-full" viewBox="0 0 400 240">
-                {/* Visual relationship connections */}
-                <line x1="200" y1="120" x2="90" y2="60" stroke="#4f46e5" strokeWidth="2" strokeDasharray="3,3" />
-                <line x1="200" y1="120" x2="310" y2="60" stroke="#06b6d4" strokeWidth="2" />
-                <line x1="200" y1="120" x2="100" y2="180" stroke="#f59e0b" strokeWidth="2" />
-                <line x1="200" y1="120" x2="300" y2="180" stroke="#ec4899" strokeWidth="2" />
+          <div style={{
+            height: '220px',
+            background: 'var(--cream)',
+            border: '1px solid var(--border)',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <svg width="100%" height="100%" viewBox="0 0 360 220">
+              {/* Edges */}
+              <line x1="180" y1="110" x2="80"  y2="55"  stroke="var(--teal)"  strokeWidth="1.5" strokeDasharray="4,3" />
+              <line x1="180" y1="110" x2="280" y2="55"  stroke="var(--amber)" strokeWidth="1.5" />
+              <line x1="180" y1="110" x2="80"  y2="165" stroke="var(--red)"   strokeWidth="1.5" />
+              <line x1="180" y1="110" x2="280" y2="165" stroke="#7c5cbf"      strokeWidth="1.5" strokeDasharray="4,3" />
 
-                {/* Center Issue Node */}
-                <circle cx="200" cy="120" r="28" fill="#4f46e5" className="animate-pulse" />
-                <text x="200" y="124" fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle">
-                  {currentIssue?.name?.slice(0, 12) || 'Issue'}...
-                </text>
+              {/* Center node */}
+              <circle cx="180" cy="110" r="26" fill="var(--teal)" />
+              <text x="180" y="114" fill="#fff" fontSize="8" fontWeight="bold" textAnchor="middle">
+                {currentIssue?.name?.slice(0, 10) || 'Issue'}
+              </text>
 
-                {/* Factor Nodes */}
-                <circle cx="90" cy="60" r="20" fill="#1e1b4b" stroke="#6366f1" strokeWidth="2" />
-                <text x="90" y="63" fill="#cbd5e1" fontSize="8" textAnchor="middle">Target Entity</text>
+              {/* Satellite nodes */}
+              <circle cx="80"  cy="55"  r="18" fill="#e0f0f0" stroke="var(--teal)"  strokeWidth="1.5" />
+              <text x="80"  y="58"  fill="var(--teal)"  fontSize="7.5" textAnchor="middle">Entity</text>
 
-                <circle cx="310" cy="60" r="20" fill="#083344" stroke="#06b6d4" strokeWidth="2" />
-                <text x="310" y="63" fill="#cbd5e1" fontSize="8" textAnchor="middle">Primary Aspect</text>
+              <circle cx="280" cy="55"  r="18" fill="#fef3e2" stroke="var(--amber)" strokeWidth="1.5" />
+              <text x="280" y="58"  fill="var(--amber)" fontSize="7.5" textAnchor="middle">Aspect</text>
 
-                <circle cx="100" cy="180" r="20" fill="#451a03" stroke="#f59e0b" strokeWidth="2" />
-                <text x="100" y="183" fill="#cbd5e1" fontSize="8" textAnchor="middle">Temporal Surge</text>
+              <circle cx="80"  cy="165" r="18" fill="#fdf0ee" stroke="var(--red)"   strokeWidth="1.5" />
+              <text x="80"  y="168" fill="var(--red)"   fontSize="7.5" textAnchor="middle">Surge</text>
 
-                <circle cx="300" cy="180" r="20" fill="#4a044e" stroke="#ec4899" strokeWidth="2" />
-                <text x="300" y="183" fill="#cbd5e1" fontSize="8" textAnchor="middle">Candidate Cause</text>
-              </svg>
-            </div>
+              <circle cx="280" cy="165" r="18" fill="#f0eefa" stroke="#7c5cbf"      strokeWidth="1.5" />
+              <text x="280" y="168" fill="#7c5cbf"      fontSize="7.5" textAnchor="middle">Candidate</text>
+            </svg>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
-            <span>Primary Associated Aspect: <strong className="text-indigo-300">{currentIssue?.primary_aspect}</strong></span>
-            <span>Cluster Size: <strong className="text-white">{currentIssue?.cluster_size} records</strong></span>
+          <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--border)', fontSize: '11.5px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Primary Aspect: <strong style={{ color: 'var(--teal)' }}>{currentIssue?.primary_aspect || '—'}</strong></span>
+            <span>Cluster Size: <strong>{currentIssue?.cluster_size || '—'}</strong></span>
           </div>
         </div>
       </div>
 
-      {/* Row 2: Evidence Grounding (Supporting vs Contradictory vs Neutral Evidence) */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* ── Row 2: Evidence ───────────────────────────────── */}
+      <div style={{ background: 'var(--paper)', border: '1px solid var(--border)', borderRadius: '6px', padding: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
           <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <span>Evidence Retrieval Audit</span>
-              <span className="text-xs bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono">
-                {evidence?.stats.total_qualifying_statements || 0} Statements Grounded
-              </span>
+            <h3 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>
+              Evidence Retrieval Audit
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Dual evidence partitioning: Evaluates both corroborating complaints and counter-evidence to eliminate hallucination.
+            <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+              Dual evidence partitioning: corroborating complaints & counter-evidence to avoid hallucination.
             </p>
           </div>
-
-          {/* Evidence Balance Statistics */}
           {evidence && (
-            <div className="flex items-center space-x-3 text-xs font-mono bg-slate-950 p-2 rounded-lg border border-slate-800">
-              <span className="text-emerald-400">Balance Ratio: {evidence.stats.evidence_balance_ratio}:1</span>
-            </div>
+            <span style={{ fontSize: '12px', fontFamily: 'monospace', color: 'var(--teal)', background: 'var(--teal-light)', border: '1px solid #9ecfcf', borderRadius: '4px', padding: '3px 10px' }}>
+              Balance ratio: {evidence.stats.evidence_balance_ratio}:1 · {evidence.stats.total_qualifying_statements} statements
+            </span>
           )}
         </div>
 
-        {/* Tab Controls: Supporting vs Contradicting vs Neutral */}
-        <div className="flex border-b border-slate-800 space-x-4">
-          <button
-            onClick={() => setActiveEvidenceTab('supporting')}
-            className={`pb-2.5 text-xs font-semibold flex items-center space-x-2 border-b-2 transition-all ${
-              activeEvidenceTab === 'supporting'
-                ? 'border-red-500 text-red-400'
-                : 'border-transparent text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Supporting Evidence ({evidence?.stats.supporting_count || 0})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveEvidenceTab('contradicting')}
-            className={`pb-2.5 text-xs font-semibold flex items-center space-x-2 border-b-2 transition-all ${
-              activeEvidenceTab === 'contradicting'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            <XCircle className="w-4 h-4" />
-            <span>Contradictory / Counter Evidence ({evidence?.stats.contradicting_count || 0})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveEvidenceTab('neutral')}
-            className={`pb-2.5 text-xs font-semibold flex items-center space-x-2 border-b-2 transition-all ${
-              activeEvidenceTab === 'neutral'
-                ? 'border-slate-400 text-slate-300'
-                : 'border-transparent text-slate-400 hover:text-slate-300'
-            }`}
-          >
-            <HelpCircle className="w-4 h-4" />
-            <span>Neutral / Informational ({evidence?.stats.neutral_count || 0})</span>
-          </button>
+        {/* Tab bar */}
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: '14px', gap: '2px' }}>
+          {EV_TABS.map((tab) => {
+            const active = activeEvidenceTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveEvidenceTab(tab.id)}
+                style={{
+                  padding: '7px 14px',
+                  fontSize: '12px',
+                  fontWeight: active ? 600 : 400,
+                  border: 'none',
+                  borderBottom: active ? `2px solid ${tab.color}` : '2px solid transparent',
+                  background: 'none',
+                  color: active ? tab.color : 'var(--text-muted)',
+                  cursor: 'pointer',
+                  transition: 'color 0.1s',
+                  marginBottom: '-1px',
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Statements List */}
-        <div className="space-y-3">
-          {evidence && evidence[activeEvidenceTab]?.length > 0 ? (
-            evidence[activeEvidenceTab].map((item, i) => (
-              <div
-                key={i}
-                className={`p-4 rounded-xl border text-xs leading-relaxed transition-all ${
-                  activeEvidenceTab === 'supporting'
-                    ? 'bg-red-950/10 border-red-900/30 text-red-200'
-                    : activeEvidenceTab === 'contradicting'
-                    ? 'bg-emerald-950/10 border-emerald-900/30 text-emerald-200'
-                    : 'bg-slate-950 border-slate-800 text-slate-300'
-                }`}
-              >
-                <p className="italic font-normal">"{item.text}"</p>
-                <div className="mt-2.5 pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                  <span>Source: {item.source} • Date: {item.date}</span>
-                  <span className="font-semibold text-slate-300">
-                    Semantic Similarity: {item.similarity}
-                  </span>
+        {/* Statements */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {evidence && (evidence as any)[activeEvidenceTab]?.length > 0 ? (
+            (evidence as any)[activeEvidenceTab].map((item: any, i: number) => {
+              const bgMap: Record<string, string> = {
+                supporting: '#fdf6f5', contradicting: '#f2fbf7', neutral: 'var(--cream)',
+              };
+              const borderMap: Record<string, string> = {
+                supporting: '#f0c0bb', contradicting: '#a8d9c0', neutral: 'var(--border)',
+              };
+              return (
+                <div key={i} style={{
+                  background: bgMap[activeEvidenceTab],
+                  border: `1px solid ${borderMap[activeEvidenceTab]}`,
+                  borderRadius: '5px',
+                  padding: '12px 14px',
+                  fontSize: '12.5px',
+                  lineHeight: 1.65,
+                  color: 'var(--text-main)',
+                }}>
+                  <p style={{ margin: 0, fontStyle: 'italic' }}>"{item.text}"</p>
+                  <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontFamily: 'monospace', color: 'var(--text-light)' }}>
+                    <span>Source: {item.source} · Date: {item.date}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--teal)' }}>Similarity: {item.similarity}</span>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           ) : (
-            <div className="p-8 text-center text-slate-500 text-xs">
+            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
               No statements in this category.
             </div>
           )}
