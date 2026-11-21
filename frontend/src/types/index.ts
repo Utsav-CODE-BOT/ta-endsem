@@ -241,4 +241,29 @@ export interface EvaluationMetrics {
     mean_emerging_score: number;
     priority_distribution: Record<string, number>;
   }>;
+  empirical_ablations?: {
+    experiment_name?: string;
+    dataset_identifier?: string;
+    input_sample_size?: number;
+    post_filtering_sample_size?: number;
+    execution_timestamp?: string;
+    configurations?: Record<string, {
+      configuration: string;
+      description: string;
+      clustering_silhouette?: number;
+      davies_bouldin?: number;
+      topic_diversity?: number;
+      measured_effect?: string;
+      component_status?: string;
+      candidates_without_fdr?: number;
+      candidates_with_fdr?: number;
+      supporting_count?: number;
+      contradicting_count?: number;
+      neutral_count?: number;
+      uncertain_abstention_count?: number;
+      unverified_supporting_count?: number;
+      false_support_suppression?: number;
+      weights_used?: Record<string, number>;
+    }>;
+  };
 }

@@ -51,8 +51,22 @@ def test_npmi_and_fisher_exact():
     # Strong association must have low Fisher p-value
     assert top["fisher_p_value"] < 0.01
     assert top["is_statistically_significant"] is True
-    # Factor events occurred at indices 0-6 (early in cluster), so precedence must indicate observed before/during
-    assert "OBSERVED_BEFORE" in top["temporal_relationship"] or "OBSERVED_DURING" in top["temporal_relationship"]
+    # Without detected_surge_date, temporal relationship must be INSUFFICIENT_TEMPORAL_EVIDENCE (no invented surge)
+    assert top["temporal_relationship"] == "INSUFFICIENT_TEMPORAL_EVIDENCE"
+
+    # When detected_surge_date is explicitly supplied, verify temporal ordering
+    hyps_with_surge = miner.mine_candidates_for_cluster(
+        cluster_id=0,
+        cluster_name="Payment Gateway Outage",
+        df=df,
+        cluster_labels=cluster_labels,
+        aspect_lists=aspect_lists,
+        timestamps=timestamps,
+        detected_surge_date="2026-03-01 15:00:00",
+    )
+    assert len(hyps_with_surge) > 0
+    top_with_surge = hyps_with_surge[0]
+    assert "OBSERVED_BEFORE" in top_with_surge["temporal_relationship"] or "OBSERVED_DURING" in top_with_surge["temporal_relationship"]
 
 
 def test_significant_only_filter_and_deduplication():

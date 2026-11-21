@@ -101,3 +101,57 @@ def test_bayesian_surge_probability_scenarios():
     p1 = TemporalAnalyzer.compute_bayesian_surge_probability(10, 100, 20, 100, random_seed=123)
     p2 = TemporalAnalyzer.compute_bayesian_surge_probability(10, 100, 20, 100, random_seed=123)
     assert p1 == p2
+
+
+def test_integrated_trend_bayesian_surge_utc_alignment():
+    """
+    Verifies that analyze_cluster_trend on UTC time series produces valid non-None
+    Bayesian surge probabilities by correctly aligning period_totals.
+    """
+    analyzer = TemporalAnalyzer(recent_window_days=2, baseline_window_days=5)
+
+    # 7 days of data for two clusters (0 and 1)
+    timestamps = []
+    clusters = []
+    for day in range(7):
+        t = pd.Timestamp(f"2026-03-0{day+1} 12:00:00", tz="UTC")
+        # Background cluster 1 has 10 items every day
+        timestamps.extend([t] * 10)
+        clusters.extend([1] * 10)
+        # Cluster 0 has 2 items in baseline days (0..4), and surges to 20 items in recent days (5..6)
+        c0_count = 2 if day < 5 else 20
+        timestamps.extend([t] * c0_count)
+        clusters.extend([0] * c0_count)
+
+    df_ts = analyzer.build_time_series(timestamps, clusters, freq="D")
+    trend0 = analyzer.analyze_cluster_trend(df_ts, cluster_id=0)
+
+    assert trend0["surge_probability"] is not None
+    assert trend0["surge_probability"] > 0.85
+    assert trend0["data_sufficiency"] == "SUFFICIENT"
+    assert trend0["recent_volume"] == 40
+    assert trend0["baseline_volume"] == 10
+
+
+def test_cusum_post_baseline_monitoring():
+    """
+    Verifies that CUSUM does not trigger on the baseline calibration window itself.
+    """
+    analyzer = TemporalAnalyzer(baseline_window_days=4, min_support_for_alarm=3)
+    # 6 days
+    timestamps = []
+    clusters = []
+    # Baseline days 1..4 have constant 5 items
+    for day in range(4):
+        t = pd.Timestamp(f"2026-03-0{day+1} 10:00:00", tz="UTC")
+        timestamps.extend([t] * 5)
+        clusters.extend([0] * 5)
+    # Day 5 has 5 items (still baseline rate)
+    t5 = pd.Timestamp("2026-03-05 10:00:00", tz="UTC")
+    timestamps.extend([t5] * 5)
+    clusters.extend([0] * 5)
+
+    df_ts = analyzer.build_time_series(timestamps, clusters, freq="D")
+    trend = analyzer.analyze_cluster_trend(df_ts, cluster_id=0)
+    assert not trend["cusum_change_detected"]
+    assert trend["cusum_change_date"] is None

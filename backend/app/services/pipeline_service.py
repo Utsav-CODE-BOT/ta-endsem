@@ -233,80 +233,77 @@ class PipelineService:
         if len(df) == 0:
             return {"status": "error", "message": "Cannot run pipeline on empty dataframe."}
 
-        with self._lock:
-            self.similarity_threshold = float(similarity_threshold)
-            logger.info("Executing VoiceMiner pipeline on %d records (n_clusters=%d, sim_thresh=%.2f)...", len(df), n_clusters, self.similarity_threshold)
-            self.current_df = df
+        logger.info("Executing VoiceMiner pipeline on %d records (n_clusters=%d, sim_thresh=%.2f)...", len(df), n_clusters, similarity_threshold)
+        local_df = df.copy()
 
-            # Re-initialize clusterer with user-specified n_clusters
-            self.clusterer = IssueClusterer(n_clusters=n_clusters, random_state=42)
-            self.evidence_retriever = EvidenceRetriever(embedder=self.embedder, top_k=15)
-            self.candidate_miner = CandidateRootCauseMiner(min_support=2)
+        # Initialize algorithm components for this execution run
+        local_clusterer = IssueClusterer(n_clusters=n_clusters, random_state=42)
+        local_evidence_retriever = EvidenceRetriever(embedder=self.embedder, top_k=15)
+        local_candidate_miner = CandidateRootCauseMiner(min_support=2)
 
-            texts = df["clean_text"].tolist()
-            timestamps = df["timestamp"].tolist()
-            sources = df["source"].tolist()
+        texts = local_df["clean_text"].tolist()
+        timestamps = local_df["timestamp"].tolist()
+        sources = local_df["source"].tolist()
 
-            # 1. Generate & Cache Embeddings
-            logger.info("Generating sentence embeddings...")
-            embeddings = self.embedder.encode(texts, batch_size=64, use_cache=True)
-            self.current_embeddings = embeddings
+        # 1. Generate & Cache Embeddings
+        logger.info("Generating sentence embeddings...")
+        local_embeddings = self.embedder.encode(texts, batch_size=64, use_cache=True)
 
-            # 2. Sentiment & Emotion Analysis (Strictly separating model prediction from provided ground truth)
-            logger.info("Inferring transformer sentiment & emotion distribution (use_dataset_labels=%s)...", use_dataset_labels)
-            predicted_sentiments = []
-            predicted_scores = []
-            effective_sentiments = []
-            sentiment_origins = []
-            emotions = []
-            emotion_scores = []
+        # 2. Sentiment & Emotion Analysis (Strictly separating model prediction from provided ground truth)
+        logger.info("Inferring transformer sentiment & emotion distribution (use_dataset_labels=%s)...", use_dataset_labels)
+        predicted_sentiments = []
+        predicted_scores = []
+        effective_sentiments = []
+        sentiment_origins = []
+        emotions = []
+        emotion_scores = []
 
-            if not use_dataset_labels:
-                # Mode A: Model prediction - run actual transformer inference, zero ground-truth leakage
-                batch_preds = self.sentiment_analyzer.analyze_batch(texts, batch_size=64)
-                for i, pred in enumerate(batch_preds):
-                    pred_label = pred["label"]
-                    pred_score = pred["score"]
+        if not use_dataset_labels:
+            # Mode A: Model prediction - run actual transformer inference, zero ground-truth leakage
+            batch_preds = self.sentiment_analyzer.analyze_batch(texts, batch_size=64)
+            for i, pred in enumerate(batch_preds):
+                pred_label = pred["label"]
+                pred_score = pred["score"]
+                predicted_sentiments.append(pred_label)
+                predicted_scores.append(pred_score)
+                effective_sentiments.append(pred_label)
+                sentiment_origins.append("MODEL_PREDICTION")
+                e_res = self.emotion_detector.detect(texts[i], text_embedding=local_embeddings[i])
+                emotions.append(e_res["primary_emotion"])
+                emotion_scores.append(e_res["score"])
+        else:
+            # Mode B: Dataset label exploration
+            for i, row in local_df.iterrows():
+                text = row["clean_text"]
+                provided = row.get("provided_sentiment")
+                if provided in ["positive", "neutral", "negative"]:
+                    predicted_sentiments.append(None)
+                    predicted_scores.append(None)
+                    effective_sentiments.append(provided)
+                    sentiment_origins.append("DATASET_LABEL")
+                else:
+                    s_res = self.sentiment_analyzer.analyze_single(text)
+                    pred_label = s_res["label"]
+                    pred_score = s_res["score"]
                     predicted_sentiments.append(pred_label)
                     predicted_scores.append(pred_score)
                     effective_sentiments.append(pred_label)
                     sentiment_origins.append("MODEL_PREDICTION")
-                    e_res = self.emotion_detector.detect(texts[i], text_embedding=embeddings[i])
-                    emotions.append(e_res["primary_emotion"])
-                    emotion_scores.append(e_res["score"])
-            else:
-                # Mode B: Dataset label exploration
-                for i, row in df.iterrows():
-                    text = row["clean_text"]
-                    provided = row.get("provided_sentiment")
-                    if provided in ["positive", "neutral", "negative"]:
-                        predicted_sentiments.append(None)
-                        predicted_scores.append(None)
-                        effective_sentiments.append(provided)
-                        sentiment_origins.append("DATASET_LABEL")
-                    else:
-                        s_res = self.sentiment_analyzer.analyze_single(text)
-                        pred_label = s_res["label"]
-                        pred_score = s_res["score"]
-                        predicted_sentiments.append(pred_label)
-                        predicted_scores.append(pred_score)
-                        effective_sentiments.append(pred_label)
-                        sentiment_origins.append("MODEL_PREDICTION")
 
-                    e_res = self.emotion_detector.detect(text, text_embedding=embeddings[i])
-                    emotions.append(e_res["primary_emotion"])
-                    emotion_scores.append(e_res["score"])
+                e_res = self.emotion_detector.detect(text, text_embedding=local_embeddings[i])
+                emotions.append(e_res["primary_emotion"])
+                emotion_scores.append(e_res["score"])
 
-            df["provided_sentiment"] = [row.get("provided_sentiment") for _, row in df.iterrows()]
-            df["predicted_sentiment"] = predicted_sentiments
-            df["predicted_score"] = predicted_scores
-            df["predicted_sentiment_score"] = predicted_scores
-            df["effective_sentiment"] = effective_sentiments
-            df["sentiment"] = effective_sentiments
-            df["sentiment_score"] = predicted_scores
-            df["sentiment_origin"] = sentiment_origins
-            df["emotion"] = emotions
-            df["emotion_score"] = emotion_scores
+        local_df["provided_sentiment"] = [row.get("provided_sentiment") for _, row in local_df.iterrows()]
+        local_df["predicted_sentiment"] = predicted_sentiments
+        local_df["predicted_score"] = predicted_scores
+        local_df["predicted_sentiment_score"] = predicted_scores
+        local_df["effective_sentiment"] = effective_sentiments
+        local_df["sentiment"] = effective_sentiments
+        local_df["sentiment_score"] = predicted_scores
+        local_df["sentiment_origin"] = sentiment_origins
+        local_df["emotion"] = emotions
+        local_df["emotion_score"] = emotion_scores
 
         # 3. Aspect Extraction
         logger.info("Extracting customer aspects...")
@@ -314,16 +311,16 @@ class PipelineService:
         for text in texts:
             asps = self.aspect_extractor.extract_aspects(text)
             all_aspects.append(asps)
-        df["aspects"] = all_aspects
+        local_df["aspects"] = all_aspects
 
         # 4. Semantic Issue Clustering with c-TF-IDF and Empirical Coherence
         logger.info("Discovering semantic issue clusters (k=%d)...", n_clusters)
-        cluster_res = self.clusterer.fit_predict(embeddings, texts, algorithm="kmeans")
+        cluster_res = local_clusterer.fit_predict(local_embeddings, texts, algorithm="kmeans")
         cluster_labels = cluster_res["labels"]
         cluster_coords = cluster_res["coords_2d"]
-        df["cluster_id"] = cluster_labels
-        df["coord_x"] = [c[0] for c in cluster_coords]
-        df["coord_y"] = [c[1] for c in cluster_coords]
+        local_df["cluster_id"] = cluster_labels
+        local_df["coord_x"] = [c[0] for c in cluster_coords]
+        local_df["coord_y"] = [c[1] for c in cluster_coords]
 
         cluster_profiles = cluster_res["cluster_profiles"]
 
@@ -361,8 +358,8 @@ class PipelineService:
                 }
 
             # Negative sentiment ratio for this cluster
-            c_mask = df["cluster_id"] == c_id
-            c_sub = df[c_mask]
+            c_mask = local_df["cluster_id"] == c_id
+            c_sub = local_df[c_mask]
             neg_ratio = float((c_sub["sentiment"] == "negative").mean()) if len(c_sub) > 0 else 0.5
 
             first_date = trend["history"][0]["date"] if trend.get("history") else "N/A"
@@ -375,7 +372,7 @@ class PipelineService:
                 cluster_id=c_id,
                 cluster_name=cl["name"],
                 total_volume=cl["size"],
-                dataset_total_volume=len(df),
+                dataset_total_volume=len(local_df),
                 growth_rate=trend["growth_rate"],
                 recent_volume=trend["recent_volume"],
                 negative_sentiment_ratio=neg_ratio,
@@ -411,8 +408,6 @@ class PipelineService:
 
         # Sort emerging issues descending by emerging score
         emerging_issues.sort(key=lambda x: x["emerging_score"], reverse=True)
-        self.current_emerging = emerging_issues
-        self.current_clusters = cluster_profiles
 
         # 7. Candidate Root-Cause Mining with Real Timestamps & Explanatory Metadata
         logger.info("Mining evidence-supported candidate root causes...")
@@ -430,7 +425,7 @@ class PipelineService:
         }
 
         entity_lists = []
-        for _, row in df.iterrows():
+        for _, row in local_df.iterrows():
             row_entities = set()
             src = row.get("source")
             if src and pd.notna(src) and str(src).strip():
@@ -447,10 +442,10 @@ class PipelineService:
 
         for cl in cluster_profiles:
             c_id = cl["cluster_id"]
-            hyps = self.candidate_miner.mine_candidates_for_cluster(
+            hyps = local_candidate_miner.mine_candidates_for_cluster(
                 cluster_id=c_id,
                 cluster_name=cl["name"],
-                df=df,
+                df=local_df,
                 cluster_labels=cluster_labels,
                 aspect_lists=all_aspects,
                 entity_lists=entity_lists,
@@ -458,8 +453,6 @@ class PipelineService:
                 detected_surge_date=cl.get("cusum_change_date"),
             )
             all_hypotheses.extend(hyps)
-
-        self.current_hypotheses = all_hypotheses
 
         # 8. Relationship Graph Construction
         logger.info("Constructing NetworkX multi-relational graph...")
@@ -469,27 +462,49 @@ class PipelineService:
                 asp = item["aspect"]
                 aspect_totals[asp] = aspect_totals.get(asp, 0) + 1
 
-        self.current_graph = self.graph_builder.build_graph(
+        local_graph = self.graph_builder.build_graph(
             clusters=cluster_profiles,
             hypotheses=all_hypotheses,
             aspects_summary=aspect_totals,
         )
 
-        # 9. Sync with Database if DB session provided
-        if db is not None:
-            self._save_to_database(db, df, cluster_profiles, emerging_issues, all_hypotheses)
+        # 9. Atomic snapshot publication under lock
+        with self._lock:
+            self.similarity_threshold = float(similarity_threshold)
+            self.clusterer = local_clusterer
+            self.evidence_retriever = local_evidence_retriever
+            self.candidate_miner = local_candidate_miner
+            self.current_df = local_df
+            self.current_embeddings = local_embeddings
+            self.current_clusters = cluster_profiles
+            self.current_emerging = emerging_issues
+            self.current_hypotheses = all_hypotheses
+            self.current_graph = local_graph
+            self.is_ready = True
 
-        self.is_ready = True
+        # 10. Sync with Database if DB session provided
+        db_saved = True
+        db_error = None
+        if db is not None:
+            db_saved, db_error = self._save_to_database(db, local_df, cluster_profiles, emerging_issues, all_hypotheses)
+
         logger.info("VoiceMiner pipeline execution successfully completed.")
 
-        return {
-            "status": "success",
-            "total_records": len(df),
+        status_str = "success" if db_saved else "partial_success"
+        res = {
+            "status": status_str,
+            "total_records": len(local_df),
             "clusters_count": len(cluster_profiles),
             "emerging_issues_count": len(emerging_issues),
             "hypotheses_count": len(all_hypotheses),
             "temporal_available": self.temporal_available,
+            "database_saved": db_saved,
         }
+        if not db_saved:
+            res["database_error"] = db_error
+            logger.warning("Pipeline executed in-memory but SQLite persistence failed: %s", db_error)
+
+        return res
 
     def _save_to_database(
         self,
@@ -588,9 +603,11 @@ class PipelineService:
 
             db.commit()
             logger.info("Persisted pipeline findings to SQLite.")
+            return True, None
         except Exception as e:
             db.rollback()
             logger.error("Failed saving pipeline state to database: %s", e)
+            return False, str(e)
 
     def analyze_realtime_text(
         self,

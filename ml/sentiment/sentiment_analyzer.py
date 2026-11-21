@@ -33,42 +33,52 @@ class SentimentAnalyzer:
     def analyze_single(self, text: str) -> Dict[str, Union[str, float]]:
         """
         Analyze sentiment for a single text.
-        Returns: {"label": "negative"|"neutral"|"positive", "score": float}
+        Returns: {"label": "negative"|"neutral"|"positive"|"unknown", "score": float, "status": str}
         """
         if not text or not text.strip():
-            return {"label": "neutral", "score": 0.50}
+            return {"label": "neutral", "score": 0.50, "status": "EMPTY_INPUT"}
 
         try:
             res = self.pipe(text[:512])[0]
             label = str(res["label"]).lower()
             score = float(res["score"])
-            return {"label": label, "score": round(score, 4)}
+            return {"label": label, "score": round(score, 4), "status": "SUCCESS"}
         except Exception as e:
-            logger.warning("Transformer sentiment inference error: %s. Defaulting to neutral.", e)
-            return {"label": "neutral", "score": 0.50}
+            logger.warning("Transformer sentiment inference error: %s.", e)
+            return {"label": "unknown", "score": 0.0, "status": "INFERENCE_ERROR"}
 
     def analyze_batch(self, texts: List[str], batch_size: int = 32) -> List[Dict[str, Union[str, float]]]:
         """
-        Batch sentiment classification.
+        Batch sentiment classification with explicit status tracking.
         """
         if not texts:
             return []
 
         results = []
-        # Process in chunks to avoid memory bottlenecks
         for i in range(0, len(texts), batch_size):
-            chunk = [t[:512] if t and t.strip() else "neutral" for t in texts[i : i + batch_size]]
-            try:
-                preds = self.pipe(chunk)
-                for pred in preds:
-                    results.append({
-                        "label": str(pred["label"]).lower(),
-                        "score": round(float(pred["score"]), 4),
-                    })
-            except Exception as e:
-                logger.warning("Batch sentiment error: %s, falling back to per-item.", e)
-                for t in chunk:
-                    results.append(self.analyze_single(t))
+            chunk = texts[i : i + batch_size]
+            valid_indices = [idx for idx, t in enumerate(chunk) if t and t.strip()]
+            valid_texts = [chunk[idx][:512] for idx in valid_indices]
+
+            chunk_results = [
+                {"label": "neutral", "score": 0.50, "status": "EMPTY_INPUT"} for _ in chunk
+            ]
+
+            if valid_texts:
+                try:
+                    preds = self.pipe(valid_texts)
+                    for valid_idx, pred in zip(valid_indices, preds):
+                        chunk_results[valid_idx] = {
+                            "label": str(pred["label"]).lower(),
+                            "score": round(float(pred["score"]), 4),
+                            "status": "SUCCESS",
+                        }
+                except Exception as e:
+                    logger.warning("Batch sentiment error: %s, falling back to per-item.", e)
+                    for valid_idx in valid_indices:
+                        chunk_results[valid_idx] = self.analyze_single(chunk[valid_idx])
+
+            results.extend(chunk_results)
 
         return results
 

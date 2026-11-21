@@ -350,11 +350,13 @@ def generate_report(req: ReportRequest):
 @router.get("/evaluation/metrics")
 def get_evaluation_metrics():
     """
-    Returns real benchmark evaluation numbers and ablation comparisons.
+    Returns real benchmark evaluation numbers, empirical component ablations (A0-A6),
+    and controlled scoring demonstration comparisons.
     """
     clustering_file = "experiments/clustering_benchmark.json"
     sentiment_file = "experiments/sentiment_evaluation.json"
     ablation_file = "experiments/ablation/ablation_results.json"
+    empirical_file = "experiments/ablation/empirical_ablation_results.json"
 
     clustering_data = {}
     if os.path.exists(clustering_file):
@@ -371,8 +373,26 @@ def get_evaluation_metrics():
         with open(ablation_file, "r") as f:
             ablation_data = json.load(f)
 
+    empirical_data = {}
+    if os.path.exists(empirical_file):
+        with open(empirical_file, "r") as f:
+            empirical_data = json.load(f)
+
     return {
         "clustering_benchmark": clustering_data,
         "sentiment_evaluation": sentiment_data,
         "ablation_study": ablation_data,
+        "empirical_ablations": empirical_data,
     }
+
+
+@router.get("/evaluation/empirical-ablations")
+def get_empirical_ablations():
+    """
+    Returns RQ4 & RQ5 Empirical Component Ablation results (A0 - A6).
+    """
+    empirical_file = "experiments/ablation/empirical_ablation_results.json"
+    if os.path.exists(empirical_file):
+        with open(empirical_file, "r") as f:
+            return json.load(f)
+    return {"configurations": {}}

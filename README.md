@@ -134,8 +134,8 @@ All metrics below reflect **actual, measured experimental results** generated fr
 | **A1** | **Without Temporal Dynamics** | Static volume only | Static volume bound; high-velocity emerging surges rank low until historical volume accumulates. |
 | **A2** | **Without Semantic Embeddings** | Silhouette: 0.0176, DB: 6.3747 | -54.2% relative silhouette drop; cluster dispersion increased by +67.1%. |
 | **A3** | **Without Sentiment Weighting** | Uniform valence (0.33) | Neutral operational inquiries compete directly with severe service failures. |
-| **A4** | **Without Statistical Filtering** | Unfiltered vs FDR Control | Raw co-occurrence ranks uncorrected noisy terms; FDR controls family-wise false discoveries. |
-| **A5** | **Without Evidence Stance Verification** | Stance vs Raw Retrieval | Raw retrieval forces false positive support; stance verification successfully abstains on 10 unverified cases. |
+| **A4** | **Without Statistical Filtering** | 3 raw vs 2 FDR-filtered | Benjamini-Hochberg procedure controls the False Discovery Rate (FDR) at alpha=0.05, pruning non-significant co-occurring noise. |
+| **A5** | **Without Evidence Stance Verification** | Stance vs Raw Retrieval | Raw retrieval forces false positive support; stance verification successfully abstains on 15 unverified cases (suppressing 6 false supports). |
 | **A6** | **Without Dimensionality Reduction** | Silhouette: 0.0347, DB: 3.8406 | SVD 10d preserves clustering structure while reducing vector storage by 97.4%. |
 
 ### Controlled EmergingScore Sensitivity Demonstration

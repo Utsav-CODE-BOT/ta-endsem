@@ -104,6 +104,15 @@ class CandidateRootCauseMiner:
         if timestamps is None or len(timestamps) == 0:
             return "INSUFFICIENT_TEMPORAL_EVIDENCE", 0.50
 
+        # When no detected surge date exists, avoid inventing a surge event from earliest cluster document
+        if not detected_surge_date:
+            return "INSUFFICIENT_TEMPORAL_EVIDENCE", 0.50
+
+        try:
+            surge_ref = pd.to_datetime(detected_surge_date, utc=True)
+        except Exception:
+            return "INSUFFICIENT_TEMPORAL_EVIDENCE", 0.50
+
         # Filter valid timestamps
         valid_factor_times = [
             pd.to_datetime(timestamps[i], utc=True) for i in factor_indices
@@ -118,16 +127,6 @@ class CandidateRootCauseMiner:
             return "INSUFFICIENT_TEMPORAL_EVIDENCE", 0.50
 
         min_factor_t = min(valid_factor_times)
-        min_cluster_t = min(valid_cluster_times)
-
-        # Use actual detected change-point date if available from temporal analyzer
-        if detected_surge_date:
-            try:
-                surge_ref = pd.to_datetime(detected_surge_date, utc=True)
-            except Exception:
-                surge_ref = min_cluster_t
-        else:
-            surge_ref = min_cluster_t
 
         # Count factor events before cluster surge reference
         factor_pre_surge = sum(1 for t in valid_factor_times if t < surge_ref)

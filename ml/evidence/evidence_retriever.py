@@ -35,9 +35,66 @@ class EvidenceRetriever:
         "on time", "normal", "solved", "flawless", "perfect", "good",
     }
 
+    NEGATION_PATTERN = re.compile(
+        r"\b(?:not|never|no|didn't|did not|wasn't|was not|isn't|is not|without)\s+(?:any\s+)?(?:crash|crashed|error|bug|issue|problem|failure|failed|timeout|delay|broken)\b",
+        re.IGNORECASE,
+    )
+
     def __init__(self, embedder=None, top_k: int = 15):
         self._embedder = embedder
         self.top_k = top_k
+
+    @classmethod
+    def verify_factor_reference(cls, text: str, factor: str) -> bool:
+        """
+        Unified verification whether text specifically references the candidate factor.
+        Enforces:
+        1. Exact phrase matching.
+        2. Version/identifier awareness: if the factor contains a specific version (e.g. v4.2, 2.1),
+           the text must contain that specific version and not merely an incompatible version.
+        3. Distinctive token matching for non-versioned factors on content tokens (>= 3 chars, non-stopwords).
+        """
+        if not text or not factor:
+            return False
+
+        text_lower = text.lower()
+        factor_lower = factor.lower().strip()
+
+        # Check for explicit versions (e.g., v4.2, 4.2.1, 17.1)
+        version_pattern = r"\bv?\d+(?:\.\d+)+\b"
+        factor_versions = set(re.findall(version_pattern, factor_lower))
+        text_versions = set(re.findall(version_pattern, text_lower))
+
+        if factor_versions:
+            # If factor specifies a version, text MUST contain that exact version
+            norm_factor_vers = {v.lstrip("v") for v in factor_versions}
+            norm_text_vers = {v.lstrip("v") for v in text_versions}
+            if not norm_factor_vers.issubset(norm_text_vers):
+                return False
+            return True
+
+        # Non-versioned factor:
+        # 1. Direct exact phrase match
+        if re.search(r"\b" + re.escape(factor_lower) + r"\b", text_lower):
+            return True
+
+        # 2. Distinctive token matching on substantive content tokens
+        # Exclude stopwords and symptom/cue words (e.g. failed, crash) when query is passed as factor
+        raw_tokens = re.split(r"[\s\-_/]+", factor_lower)
+        stopwords = {"the", "and", "for", "with", "app", "our", "this", "that", "from", "into"}
+        all_cues = cls.SUPPORTING_CUES | cls.CONTRADICTING_CUES
+        content_tokens = [
+            tok.strip(",.!?;:") for tok in raw_tokens
+            if len(tok.strip(",.!?;:")) >= 3 and tok.strip(",.!?;:") not in stopwords
+        ]
+        substantive_tokens = [t for t in content_tokens if t not in all_cues]
+        target_tokens = substantive_tokens if substantive_tokens else content_tokens
+
+        if not target_tokens:
+            return factor_lower in text_lower
+
+        # For multi-token factors/entities, require all substantive tokens to be present
+        return all(bool(re.search(r"\b" + re.escape(tok) + r"\b", text_lower)) for tok in target_tokens)
 
     def _determine_stance(
         self,
@@ -51,43 +108,32 @@ class EvidenceRetriever:
         A statement that does not verify a mention of the candidate factor must NEVER be
         classified as factor-specific SUPPORTING or CONTRADICTING solely because of sentiment.
         """
+        if not self.verify_factor_reference(text, factor):
+            return "UNCERTAIN"
+
         text_lower = text.lower()
-        factor_lower = factor.lower().strip()
-
-        # Word-boundary matching for factor phrase or distinctive tokens
-        factor_pattern = r"\b" + re.escape(factor_lower) + r"\b"
-        has_full_factor = bool(re.search(factor_pattern, text_lower))
-
-        # Check distinctive tokens (preserving version strings like v4.2, len >= 2)
-        raw_tokens = re.split(r"[\s\-_/]+", factor_lower)
-        factor_tokens = [
-            tok.strip(",.!?;:") for tok in raw_tokens
-            if len(tok.strip(",.!?;:")) >= 2 and tok.strip(",.!?;:") not in {"the", "and", "for", "with", "app"}
-        ]
-        has_token_factor = any(bool(re.search(r"\b" + re.escape(tok) + r"\b", text_lower)) for tok in factor_tokens) if factor_tokens else False
-        has_factor = has_full_factor or has_token_factor
-
-        # Rule 1: Factor is absent from text -> must not be factor-specific evidence
-        if not has_factor:
-            return "UNCERTAIN"
-
-        has_supp_cues = any(bool(re.search(r"\b" + re.escape(cue) + r"\b", text_lower)) for cue in self.SUPPORTING_CUES)
         has_contra_cues = any(bool(re.search(r"\b" + re.escape(cue) + r"\b", text_lower)) for cue in self.CONTRADICTING_CUES)
+        has_negation = bool(self.NEGATION_PATTERN.search(text_lower))
 
-        # Rule 2: Mixed conflicting signals (e.g. "Great update, another failure!") -> UNCERTAIN
-        if has_supp_cues and has_contra_cues:
+        # Filter out negated cues to avoid treating "did not crash" as a failure cue
+        text_without_negations = self.NEGATION_PATTERN.sub(" ", text_lower)
+        has_supp_cues = any(bool(re.search(r"\b" + re.escape(cue) + r"\b", text_without_negations)) for cue in self.SUPPORTING_CUES)
+
+        # Rule 1: Conflicting or mixed cues -> UNCERTAIN
+        if has_supp_cues and (has_contra_cues or has_negation):
             return "UNCERTAIN"
 
-        # Rule 3: Factor present with clear contradiction / positive experience
-        if has_contra_cues or sentiment == "positive":
+        # Rule 2: Factor present with clear contradiction / positive experience / negated issue
+        if has_negation or has_contra_cues or sentiment == "positive":
             if not has_supp_cues:
                 return "CONTRADICTING"
 
-        # Rule 4: Factor present with complaint / failure cues or negative sentiment
+        # Rule 3: Factor present with complaint / failure cues or negative sentiment
         if has_supp_cues or sentiment == "negative":
-            return "SUPPORTING"
+            if not (has_contra_cues or has_negation):
+                return "SUPPORTING"
 
-        # Rule 5: Factor present with neutral sentiment
+        # Rule 4: Factor present with neutral sentiment
         if sentiment == "neutral":
             return "NEUTRAL"
 
@@ -158,8 +204,6 @@ class EvidenceRetriever:
         total_qualifying = 0
         factor_verified_count = 0
 
-        factor_tokens = [tok for tok in re.split(r"[\s\-_]+", target_factor.lower()) if len(tok) >= 3]
-
         for idx in ranked_indices:
             score = float(sims[idx])
             if score < similarity_threshold:
@@ -171,8 +215,8 @@ class EvidenceRetriever:
             date_str = dates[idx] if dates and idx < len(dates) else "N/A"
             source_str = sources[idx] if sources and idx < len(sources) else "Customer Feedback"
 
-            # Check factor mention
-            is_factor_present = any(tok in raw_text.lower() for tok in factor_tokens) if factor_tokens else (target_factor.lower() in raw_text.lower())
+            # Check factor mention with unified hypothesis-aware verification
+            is_factor_present = self.verify_factor_reference(raw_text, target_factor)
             if is_factor_present:
                 factor_verified_count += 1
 

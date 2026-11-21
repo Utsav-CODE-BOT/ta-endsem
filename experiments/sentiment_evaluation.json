@@ -2,7 +2,7 @@
   "experiment_name": "RQ2_Sentiment_RoBERTa_Evaluation",
   "dataset_identifier": "data/samples/airline_sample_1000.csv",
   "n_samples": 120,
-  "execution_timestamp": "2026-11-21 10:40:36 UTC",
+  "execution_timestamp": "2026-11-21 13:51:38 UTC",
   "accuracy": 0.8333,
   "macro_precision": 0.7829,
   "macro_recall": 0.8123,

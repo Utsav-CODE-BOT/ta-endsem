@@ -60,7 +60,7 @@ class TemporalAnalyzer:
             y_b, y_r: counts of cluster C in baseline and recent periods.
             n_b, n_r: total feedback records across all clusters in baseline and recent periods.
         """
-        if n_b <= 0 or n_r <= 0:
+        if n_b <= 0 or n_r <= 0 or alpha <= 0 or beta <= 0 or surge_lambda <= 0 or n_samples <= 0:
             return None
         if y_b < 0 or y_r < 0 or y_b > n_b or y_r > n_r:
             return None
@@ -205,7 +205,9 @@ class TemporalAnalyzer:
         threshold_h = 4.0 * ref_std
 
         s_pos = 0.0
-        for i, val in enumerate(counts):
+        # Change detection monitors post-baseline periods (i >= ref_window_len) to prevent in-sample evaluation of calibration window
+        for i in range(ref_window_len, n_periods):
+            val = counts[i]
             s_pos = max(0.0, s_pos + (val - ref_mean - slack_k))
             if s_pos > threshold_h and not cusum_detected:
                 if val >= self.min_support_for_alarm:
@@ -233,12 +235,12 @@ class TemporalAnalyzer:
                 growth_rate = 100.0 if recent >= self.min_support_for_alarm else 0.0
 
             # Bayesian Beta-Binomial Surge Probability on issue prevalence
-            sub_periods = sub["period"].values
-            recent_periods = sub_periods[-self.recent_window_days:]
-            baseline_periods = sub_periods[: -self.recent_window_days]
+            # Maintain pandas Series/Index without calling .values (which strips timezone and breaks alignment)
+            recent_periods = sub["period"].iloc[-self.recent_window_days:]
+            baseline_periods = sub["period"].iloc[: -self.recent_window_days]
 
-            n_r = int(period_totals.loc[period_totals.index.isin(recent_periods)].sum())
-            n_b = int(period_totals.loc[period_totals.index.isin(baseline_periods)].sum())
+            n_r = int(period_totals.reindex(recent_periods, fill_value=0).sum())
+            n_b = int(period_totals.reindex(baseline_periods, fill_value=0).sum())
             y_r = int(recent)
             y_b = int(baseline_total)
 

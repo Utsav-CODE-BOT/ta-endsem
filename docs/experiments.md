@@ -68,11 +68,11 @@ This document details the experimental protocols, baselines, ablation studies, a
 | :--- | :--- | :---: | :--- |
 | **A0: Full System** | Complete VoiceMiner Pipeline | Silhouette: 0.0384, DB: 3.8153 | Balanced multi-factor ranking with FDR significance control and stance verification. |
 | **A1: W/O Temporal** | Static volume and sentiment only | Static volume bound | Static volume bound; high-velocity emerging surges rank low until historical volume accumulates. |
-| **A2: W/O Semantic** | Lexical TF-IDF (1500d) Baseline | Silhouette: 0.0176, DB: 6.3747 | -54.2% relative silhouette drop; cluster dispersion increased by +67.1%. |
+| **A2: W/O Semantic** | Lexical TF-IDF (1500d) Baseline | Silhouette: 0.0176, DB: 6.3747 | Silhouette dropped from 0.0384 to 0.0176; cluster dispersion increased by +67.1%. |
 | **A3: W/O Sentiment** | Uniform valence (0.33) | Score: 0.6589 | Neutral operational questions compete directly with severe service complaints. |
-| **A4: W/O Statistical Filtering** | Raw co-occurrence vs FDR | 3 raw factors vs 3 filtered | Without FDR control, uncorrected noise terms rank as root causes; FDR controls family-wise false discoveries. |
-| **A5: W/O Evidence Stance** | Raw Retrieval vs Stance | 9 supporting, 10 abstentions | Raw retrieval forces false support confirmation bias; stance classification abstains on unverified text. |
-| **A6: W/O Dimensionality Reduction** | Raw 384d SBERT (no SVD) | Silhouette: 0.0347, DB: 3.8406 | SVD 10d reduction preserves clustering structure while reducing vector storage by 97.4%. |
+| **A4: W/O Statistical Filtering** | Raw co-occurrence vs FDR | 3 raw factors vs 2 FDR-filtered | Benjamini-Hochberg procedure controls the False Discovery Rate (FDR) at alpha=0.05, eliminating non-significant co-occurring noise. |
+| **A5: W/O Evidence Stance** | Raw Retrieval vs Stance | 9 supporting, 15 abstentions | Naive retrieval risks confirmation bias; hypothesis-conditioned stance verification withheld 15 ambiguous/unverified items. |
+| **A6: W/O Dimensionality Reduction** | Raw 384d SBERT (no SVD) | Silhouette: 0.0347, DB: 3.8406 | SVD 10d reduction preserves clustering structure (0.0384 vs 0.0347) while reducing vector storage by 97.4%. |
 
 ---
 

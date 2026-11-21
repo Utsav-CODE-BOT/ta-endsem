@@ -4,7 +4,7 @@
   "input_sample_size": 1000,
   "post_filtering_sample_size": 498,
   "random_seed": 42,
-  "execution_timestamp": "2026-11-21 10:40:38 UTC",
+  "execution_timestamp": "2026-11-21 13:51:40 UTC",
   "configurations": {
     "A0_full_system": {
       "configuration": "A0_Full_System",
@@ -24,14 +24,14 @@
         "negative_sentiment": 0.25,
         "cluster_coherence": 0.15
       },
-      "measured_effect": "Prioritization is entirely static-volume bound; high-growth emergent outages rank low until historical volume accumulates."
+      "measured_effect": "Under temporal modeling, high-growth cluster ranks #1 ('Jetblue & Jfk (Fleek)'); without temporal tracking, static volume dominates ('Flight & Cancelled (Usairways)') delaying detection."
     },
     "A2_without_semantic_embeddings": {
       "configuration": "A2_Without_Semantic_Embeddings",
       "description": "Lexical TF-IDF (1500d) + K-Means Baseline",
       "clustering_silhouette": 0.0176,
       "davies_bouldin": 6.3747,
-      "measured_effect": "Silhouette dropped from 0.0384 to 0.0176 (-54.2% relative); cluster dispersion increased by +67.1%."
+      "measured_effect": "Silhouette dropped from 0.0384 to 0.0176; cluster dispersion increased."
     },
     "A3_without_sentiment": {
       "configuration": "A3_Without_Sentiment",
@@ -43,23 +43,25 @@
         "negative_sentiment": 0.0,
         "cluster_coherence": 0.10000000000000002
       },
-      "measured_effect": "Neutral operational questions compete directly with severe service complaints."
+      "measured_effect": "Neutral operational inquiries compete directly with severe service complaints, deflating urgency."
     },
     "A4_without_statistical_filtering": {
       "configuration": "A4_Without_Statistical_Filtering",
       "description": "Raw Association Co-occurrence vs Benjamini-Hochberg FDR Control",
       "candidates_without_fdr": 3,
-      "candidates_with_fdr": 3,
-      "measured_effect": "Without FDR control, 3 candidate factors returned including non-significant noise; FDR filtering reduced false discovery set to 3 statistically supported factors."
+      "candidates_with_fdr": 2,
+      "measured_effect": "Benjamini-Hochberg FDR control (alpha=0.05) pruned 1 non-significant co-occurring candidate factor(s), retaining 2 statistically validated factors."
     },
     "A5_without_evidence_verification": {
       "configuration": "A5_Without_Evidence_Verification",
-      "description": "Raw Semantic Retrieval vs Hypothesis-Conditioned Stance Classification",
+      "description": "Naive Sentiment Retrieval vs Hypothesis-Conditioned Stance Verification",
       "supporting_count": 9,
       "contradicting_count": 0,
       "neutral_count": 0,
-      "uncertain_abstention_count": 10,
-      "measured_effect": "Hypothesis-aware stance classification successfully abstains on factor-unverified feedback, guarding against false support confirmation bias."
+      "uncertain_abstention_count": 15,
+      "unverified_supporting_count": 15,
+      "false_support_suppression": 6,
+      "measured_effect": "Stance verification prevented 15 ambiguous or unverified feedback items from being falsely labeled as supporting evidence."
     },
     "A6_without_dimensionality_reduction": {
       "configuration": "A6_Without_Dimensionality_Reduction",

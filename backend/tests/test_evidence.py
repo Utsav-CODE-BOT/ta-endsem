@@ -55,3 +55,20 @@ def test_hypothesis_aware_stance_classification():
     # Example 5: Factor absent + negative -> UNCERTAIN (cannot be factor-specific supporting)
     s5 = er._determine_stance("The flight was delayed.", factor, "negative")
     assert s5 == "UNCERTAIN"
+
+    # Example 6: Conflicting version (v4.1 instead of v4.2) -> UNCERTAIN (not verified)
+    s6 = er._determine_stance("After v4.1 the mobile app checkout fails every time.", factor, "negative")
+    assert s6 == "UNCERTAIN"
+    assert not er.verify_factor_reference("After v4.1 the mobile app checkout fails every time.", factor)
+
+    # Example 7: Negated failure ("no error", "didn't fail") -> CONTRADICTING, not SUPPORTING
+    s7 = er._determine_stance("Checkout had no error and did not crash on v4.2.", factor, "positive")
+    assert s7 == "CONTRADICTING"
+
+
+def test_factor_verification_consistency():
+    er = EvidenceRetriever()
+    factor = "Payment Gateway"
+    assert er.verify_factor_reference("The payment gateway crashed.", factor)
+    assert not er.verify_factor_reference("I made a payment for my subscription.", factor)
+    assert er.verify_factor_reference("Gateway error during payment.", factor)
