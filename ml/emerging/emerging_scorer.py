@@ -72,19 +72,21 @@ class EmergingScorer:
         cluster_coherence: float = 0.75,
         first_detected_date: Optional[str] = None,
         surge_probability: Optional[float] = None,
+        coherence_reliable: bool = True,
     ) -> Dict[str, Any]:
         """
         Calculate reproducible emerging score, priority ranking, and statistical support assessment.
         Validates all inputs against boundary violations.
+        Note: The logistic sigmoid maps 0% baseline-matching growth to norm_growth = 0.50.
         """
         # Input sanitation & boundary enforcement
-        total_vol = max(0, int(total_volume))
-        dataset_vol = max(total_vol, int(dataset_total_volume))
-        rec_vol = max(0, min(int(recent_volume), total_vol))
+        total_vol = max(0, int(total_volume)) if not (np.isnan(total_volume) or np.isinf(total_volume)) else 0
+        dataset_vol = max(total_vol, int(dataset_total_volume)) if not (np.isnan(dataset_total_volume) or np.isinf(dataset_total_volume)) else total_vol
+        rec_vol = max(0, min(int(recent_volume), total_vol)) if not (np.isnan(recent_volume) or np.isinf(recent_volume)) else 0
 
         clean_growth = float(growth_rate) if not (np.isnan(growth_rate) or np.isinf(growth_rate)) else 0.0
-        clean_neg = float(min(1.0, max(0.0, negative_sentiment_ratio))) if not np.isnan(negative_sentiment_ratio) else 0.5
-        clean_coherence = float(min(1.0, max(0.0, cluster_coherence))) if not np.isnan(cluster_coherence) else 0.5
+        clean_neg = float(min(1.0, max(0.0, negative_sentiment_ratio))) if not (np.isnan(negative_sentiment_ratio) or np.isinf(negative_sentiment_ratio)) else 0.5
+        clean_coherence = float(min(1.0, max(0.0, cluster_coherence))) if not (np.isnan(cluster_coherence) or np.isinf(cluster_coherence)) else 0.5
 
         # 1. Growth factor: mapped via sigmoid with center at 0% growth
         norm_growth = self._sigmoid_normalize(clean_growth, scale=100.0)
@@ -117,12 +119,12 @@ class EmergingScorer:
 
         priority = self.assign_priority(score)
 
-        # Statistical support assessment: separates priority from sample confidence
+        # Sample support assessment: separates priority from sample confidence
         if total_vol >= 20 and rec_vol >= 5:
-            confidence_level = "HIGH_STATISTICAL_SUPPORT"
+            confidence_level = "HIGH_SAMPLE_SUPPORT"
             evidence_sufficient = True
         elif total_vol >= 5 and rec_vol >= 2:
-            confidence_level = "MODERATE_STATISTICAL_SUPPORT"
+            confidence_level = "MODERATE_SAMPLE_SUPPORT"
             evidence_sufficient = True
         else:
             confidence_level = "LOW_SAMPLE_SUPPORT"
@@ -138,6 +140,7 @@ class EmergingScorer:
             "recent_volume": rec_vol,
             "negative_sentiment_ratio": round(clean_neg, 4),
             "cluster_coherence": round(clean_coherence, 4),
+            "coherence_reliable": coherence_reliable,
             "first_detected_date": first_detected_date or "N/A",
             "surge_probability": surge_probability,
             "confidence_level": confidence_level,

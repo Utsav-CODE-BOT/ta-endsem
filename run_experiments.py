@@ -48,8 +48,23 @@ print(f"  Accuracy: {sentiment_res['accuracy'] * 100:.2f}%")
 print(f"  Macro-F1: {sentiment_res['macro_f1']:.4f}")
 print(f"  Confusion Matrix: {sentiment_res['confusion_matrix']}")
 
-# 3. Ablation Study
-print("\n--- Running Ablation Study (Section 35) ---")
+# 3. Empirical Component Ablations (RQ4 & RQ5)
+print("\n--- Running Empirical Component Ablations (A0-A6) ---")
+empirical_ablation_res = ablation_runner.run_empirical_component_ablations(
+    df=df,
+    n_clusters=6,
+    random_seed=42,
+)
+print("Empirical Component Ablations Summary:")
+for key, conf in empirical_ablation_res["configurations"].items():
+    print(f"  [{key}] {conf['description']}")
+    if "clustering_silhouette" in conf:
+        print(f"       Silhouette: {conf['clustering_silhouette']}, DB: {conf.get('davies_bouldin')}")
+    if "measured_effect" in conf:
+        print(f"       Measured Effect: {conf['measured_effect']}")
+
+# 4. Controlled EmergingScore Sensitivity Demonstration
+print("\n--- Running Controlled EmergingScore Sensitivity Demonstration ---")
 mock_issues = [
     {"cluster_id": 0, "name": "Flight Delays & Missed Connections", "total_volume": 340, "growth_rate": 280.5, "recent_volume": 140, "negative_sentiment_ratio": 0.88, "coherence": 0.82},
     {"cluster_id": 1, "name": "Lost Baggage & Carousel Handling", "total_volume": 210, "growth_rate": 195.0, "recent_volume": 90, "negative_sentiment_ratio": 0.94, "coherence": 0.85},

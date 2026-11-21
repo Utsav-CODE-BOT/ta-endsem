@@ -185,3 +185,27 @@ if __name__ == "__main__":
     unique_texts = df["text"].nunique()
     print(f"Generated {len(df)} records ({unique_texts} unique text strings) in {out_path}.")
     print("Dataset explicitly tagged: DEMO / SYNTHETIC DATA")
+
+    # Truthful measurement of injected incident dynamics (FIX 12)
+    valid_ts_df = df[df["timestamp"].notna()].copy()
+    valid_ts_df["dt"] = pd.to_datetime(valid_ts_df["timestamp"])
+    start_dt = valid_ts_df["dt"].min()
+    valid_ts_df["day_offset"] = (valid_ts_df["dt"] - start_dt).dt.days
+
+    baseline_mask = valid_ts_df["day_offset"] < 18
+    incident_mask = valid_ts_df["day_offset"] >= 18
+
+    n_base = int(baseline_mask.sum())
+    n_inc = int(incident_mask.sum())
+
+    pay_neg_base = int(((valid_ts_df["category"] == "payment") & (valid_ts_df["sentiment"] == "negative") & baseline_mask).sum())
+    pay_neg_inc = int(((valid_ts_df["category"] == "payment") & (valid_ts_df["sentiment"] == "negative") & incident_mask).sum())
+
+    prev_base = pay_neg_base / max(1, n_base)
+    prev_inc = pay_neg_inc / max(1, n_inc)
+    growth_pct = ((prev_inc - prev_base) / max(1e-5, prev_base)) * 100.0
+
+    print(f"Empirical Injected Dynamics:")
+    print(f"  Baseline Period (Days 0-17): {pay_neg_base} payment failures / {n_base} total ({prev_base * 100:.2f}%)")
+    print(f"  Incident Period (Days 18-27): {pay_neg_inc} payment failures / {n_inc} total ({prev_inc * 100:.2f}%)")
+    print(f"  Measured Prevalence Growth: {growth_pct:+.2f}%")

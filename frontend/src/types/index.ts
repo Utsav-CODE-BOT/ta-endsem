@@ -224,6 +224,7 @@ export interface EvaluationMetrics {
       silhouette_score: number;
       davies_bouldin_index: number;
       calinski_harabasz_index: number;
+      topic_diversity?: number;
     }>;
   };
   sentiment_evaluation: {

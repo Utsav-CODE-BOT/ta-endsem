@@ -47,35 +47,49 @@ class EvidenceRetriever:
     ) -> str:
         """
         Determines logical evidence stance towards the candidate factor association hypothesis.
+        Strict hypothesis-aware decision rule:
+        A statement that does not verify a mention of the candidate factor must NEVER be
+        classified as factor-specific SUPPORTING or CONTRADICTING solely because of sentiment.
         """
         text_lower = text.lower()
         factor_lower = factor.lower().strip()
 
-        # Check factor mention or key tokens
-        factor_tokens = [tok for tok in re.split(r"[\s\-_]+", factor_lower) if len(tok) >= 3]
-        has_factor = any(tok in text_lower for tok in factor_tokens) if factor_tokens else (factor_lower in text_lower)
+        # Word-boundary matching for factor phrase or distinctive tokens
+        factor_pattern = r"\b" + re.escape(factor_lower) + r"\b"
+        has_full_factor = bool(re.search(factor_pattern, text_lower))
 
-        has_supp_cues = any(cue in text_lower for cue in self.SUPPORTING_CUES)
-        has_contra_cues = any(cue in text_lower for cue in self.CONTRADICTING_CUES)
+        # Check distinctive tokens (preserving version strings like v4.2, len >= 2)
+        raw_tokens = re.split(r"[\s\-_/]+", factor_lower)
+        factor_tokens = [
+            tok.strip(",.!?;:") for tok in raw_tokens
+            if len(tok.strip(",.!?;:")) >= 2 and tok.strip(",.!?;:") not in {"the", "and", "for", "with", "app"}
+        ]
+        has_token_factor = any(bool(re.search(r"\b" + re.escape(tok) + r"\b", text_lower)) for tok in factor_tokens) if factor_tokens else False
+        has_factor = has_full_factor or has_token_factor
 
-        # Factor present with contradiction cues or clear positive experience
-        if has_factor and (has_contra_cues or sentiment == "positive"):
-            if not has_supp_cues or sentiment == "positive":
+        # Rule 1: Factor is absent from text -> must not be factor-specific evidence
+        if not has_factor:
+            return "UNCERTAIN"
+
+        has_supp_cues = any(bool(re.search(r"\b" + re.escape(cue) + r"\b", text_lower)) for cue in self.SUPPORTING_CUES)
+        has_contra_cues = any(bool(re.search(r"\b" + re.escape(cue) + r"\b", text_lower)) for cue in self.CONTRADICTING_CUES)
+
+        # Rule 2: Mixed conflicting signals (e.g. "Great update, another failure!") -> UNCERTAIN
+        if has_supp_cues and has_contra_cues:
+            return "UNCERTAIN"
+
+        # Rule 3: Factor present with clear contradiction / positive experience
+        if has_contra_cues or sentiment == "positive":
+            if not has_supp_cues:
                 return "CONTRADICTING"
 
-        # Factor present with complaint / failure cues
-        if has_factor and (has_supp_cues or sentiment == "negative"):
+        # Rule 4: Factor present with complaint / failure cues or negative sentiment
+        if has_supp_cues or sentiment == "negative":
             return "SUPPORTING"
 
-        # Factor present but neutral sentiment and no strong cues
-        if has_factor and sentiment == "neutral":
+        # Rule 5: Factor present with neutral sentiment
+        if sentiment == "neutral":
             return "NEUTRAL"
-
-        # Factor absent or weakly referenced: label as UNCERTAIN rather than forcing false supporting stance
-        if sentiment == "negative" and has_supp_cues:
-            return "SUPPORTING"  # general issue corroboration
-        elif sentiment == "positive":
-            return "CONTRADICTING"
 
         return "UNCERTAIN"
 

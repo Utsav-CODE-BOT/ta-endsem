@@ -26,12 +26,50 @@ class TemporalAnalyzer:
         z_score_threshold: float = 2.0,
         ewma_alpha: float = 0.3,
         min_support_for_alarm: int = 3,
+        surge_lambda: float = 1.0,
+        monte_carlo_samples: int = 10000,
+        random_seed: int = 42,
     ):
         self.recent_window_days = recent_window_days
         self.baseline_window_days = baseline_window_days
         self.z_score_threshold = z_score_threshold
         self.ewma_alpha = ewma_alpha
         self.min_support_for_alarm = min_support_for_alarm
+        self.surge_lambda = surge_lambda
+        self.monte_carlo_samples = monte_carlo_samples
+        self.random_seed = random_seed
+
+    @staticmethod
+    def compute_bayesian_surge_probability(
+        y_b: int,
+        n_b: int,
+        y_r: int,
+        n_r: int,
+        alpha: float = 1.0,
+        beta: float = 1.0,
+        surge_lambda: float = 1.0,
+        n_samples: int = 10000,
+        random_seed: int = 42,
+    ) -> Optional[float]:
+        """
+        Calculates P(p_r > surge_lambda * p_b | D_b, D_r) via reproducible Monte Carlo sampling
+        from Beta posteriors:
+            p_b | D_b ~ Beta(alpha + y_b, beta + n_b - y_b)
+            p_r | D_r ~ Beta(alpha + y_r, beta + n_r - y_r)
+        where:
+            y_b, y_r: counts of cluster C in baseline and recent periods.
+            n_b, n_r: total feedback records across all clusters in baseline and recent periods.
+        """
+        if n_b <= 0 or n_r <= 0:
+            return None
+        if y_b < 0 or y_r < 0 or y_b > n_b or y_r > n_r:
+            return None
+
+        rng = np.random.default_rng(random_seed)
+        post_b = rng.beta(alpha + y_b, beta + (n_b - y_b), size=n_samples)
+        post_r = rng.beta(alpha + y_r, beta + (n_r - y_r), size=n_samples)
+        prob = float(np.mean(post_r > (surge_lambda * post_b)))
+        return round(prob, 3)
 
     def build_time_series(
         self,
@@ -174,12 +212,18 @@ class TemporalAnalyzer:
                     cusum_detected = True
                     cusum_date = periods[i]
 
-        # 4. Recent vs Baseline Growth Rate
+        # 4. Recent vs Baseline Growth Rate & Exposure-Normalized Bayesian Surge Probability
+        if "total_count" in series_df.columns:
+            period_totals = series_df.groupby("period")["total_count"].sum()
+        else:
+            period_totals = pd.Series(dtype=float)
+
         if n_periods >= (self.recent_window_days + 1):
-            recent = float(np.sum(counts[-self.recent_window_days:]))
-            baseline_slice = counts[: -self.recent_window_days]
-            baseline_total = float(np.sum(baseline_slice))
-            baseline_days = len(baseline_slice)
+            recent_counts = counts[-self.recent_window_days:]
+            baseline_counts = counts[: -self.recent_window_days]
+            recent = float(np.sum(recent_counts))
+            baseline_total = float(np.sum(baseline_counts))
+            baseline_days = len(baseline_counts)
 
             # Expected volume in a window of size recent_window_days under the baseline rate
             expected_recent = (baseline_total / max(1, baseline_days)) * self.recent_window_days
@@ -187,31 +231,36 @@ class TemporalAnalyzer:
                 growth_rate = ((recent - expected_recent) / expected_recent) * 100.0
             else:
                 growth_rate = 100.0 if recent >= self.min_support_for_alarm else 0.0
+
+            # Bayesian Beta-Binomial Surge Probability on issue prevalence
+            sub_periods = sub["period"].values
+            recent_periods = sub_periods[-self.recent_window_days:]
+            baseline_periods = sub_periods[: -self.recent_window_days]
+
+            n_r = int(period_totals.loc[period_totals.index.isin(recent_periods)].sum())
+            n_b = int(period_totals.loc[period_totals.index.isin(baseline_periods)].sum())
+            y_r = int(recent)
+            y_b = int(baseline_total)
+
+            surge_prob = self.compute_bayesian_surge_probability(
+                y_b=y_b,
+                n_b=n_b,
+                y_r=y_r,
+                n_r=n_r,
+                alpha=1.0,
+                beta=1.0,
+                surge_lambda=self.surge_lambda,
+                n_samples=self.monte_carlo_samples,
+                random_seed=self.random_seed,
+            )
         else:
             recent = float(np.sum(counts))
             baseline_total = 0.0
             growth_rate = 0.0
+            surge_prob = None
 
-        # 5. Bayesian Beta-Binomial Surge Probability
-        # Estimates P(theta_recent > theta_baseline) using analytical normal approximation
-        # of the difference of two Beta posteriors
         total_cluster_vol = float(np.sum(counts))
-        data_sufficiency = "SUFFICIENT" if total_cluster_vol >= 5 else "SPARSE_DATA"
-
-        alpha_prior, beta_prior = 1.0, 1.0
-        post_alpha_rec = alpha_prior + recent
-        post_beta_rec = beta_prior + max(0.0, float(np.sum(counts)) - recent)
-        mean_rec = post_alpha_rec / (post_alpha_rec + post_beta_rec)
-        var_rec = (post_alpha_rec * post_beta_rec) / (((post_alpha_rec + post_beta_rec) ** 2) * (post_alpha_rec + post_beta_rec + 1))
-
-        # Expected baseline proportion over same duration
-        base_rate = (self.recent_window_days / max(1, n_periods))
-        diff_mean = mean_rec - base_rate
-        diff_std = np.sqrt(var_rec + 1e-5)
-        # Probability difference > 0 via standard normal CDF approximation
-        z_surge = diff_mean / diff_std
-        surge_prob = 0.5 * (1.0 + math.erf(z_surge / np.sqrt(2.0)))
-        surge_prob = round(float(max(0.0, min(1.0, surge_prob))), 3)
+        data_sufficiency = "SUFFICIENT" if (total_cluster_vol >= 5 and baseline_total > 0 and surge_prob is not None) else "SPARSE_DATA"
 
         history = []
         for i in range(len(periods)):

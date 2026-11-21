@@ -284,7 +284,10 @@ def analyze_customer_text(req: TextAnalyzeRequest):
     Real-time customer feedback text analyzer.
     """
     service = PipelineService.get_instance()
-    res = service.analyze_realtime_text(req.text)
+    res = service.analyze_realtime_text(
+        raw_text=req.text,
+        similarity_threshold=req.similarity_threshold,
+    )
     return TextAnalyzeResponse(**res)
 
 

@@ -88,47 +88,57 @@ class CandidateRootCauseMiner:
 
     def _determine_temporal_precedence(
         self,
-        factor_indices: List[int],
+        factor_indices: set,
         cluster_indices: List[int],
         timestamps: Optional[List[pd.Timestamp]],
+        detected_surge_date: Optional[str] = None,
     ) -> Tuple[str, float]:
         """
         Determines empirical temporal precedence by analyzing actual timestamps of factor
-        occurrences versus cluster surge occurrences.
+        occurrences versus cluster surge occurrences. Strictly non-causal terminology:
+        - OBSERVED_BEFORE_ISSUE_SURGE
+        - OBSERVED_DURING_ISSUE_SURGE
+        - OBSERVED_AFTER_ISSUE_SURGE
+        - INSUFFICIENT_TEMPORAL_EVIDENCE
         """
         if timestamps is None or len(timestamps) == 0:
-            return "Insufficient temporal evidence (No timestamps provided)", 0.50
+            return "INSUFFICIENT_TEMPORAL_EVIDENCE", 0.50
 
         # Filter valid timestamps
         valid_factor_times = [
-            timestamps[i] for i in factor_indices
+            pd.to_datetime(timestamps[i], utc=True) for i in factor_indices
             if i < len(timestamps) and pd.notna(timestamps[i])
         ]
         valid_cluster_times = [
-            timestamps[i] for i in cluster_indices
+            pd.to_datetime(timestamps[i], utc=True) for i in cluster_indices
             if i < len(timestamps) and pd.notna(timestamps[i])
         ]
 
         if len(valid_factor_times) < 2 or len(valid_cluster_times) < 2:
-            return "Insufficient temporal evidence (Sparse timestamp support)", 0.50
+            return "INSUFFICIENT_TEMPORAL_EVIDENCE", 0.50
 
         min_factor_t = min(valid_factor_times)
         min_cluster_t = min(valid_cluster_times)
 
-        # Calculate cluster surge start (e.g. median / 25th percentile of cluster dates)
-        sorted_cluster_t = sorted(valid_cluster_times)
-        cluster_surge_t = sorted_cluster_t[max(0, int(len(sorted_cluster_t) * 0.25))]
+        # Use actual detected change-point date if available from temporal analyzer
+        if detected_surge_date:
+            try:
+                surge_ref = pd.to_datetime(detected_surge_date, utc=True)
+            except Exception:
+                surge_ref = min_cluster_t
+        else:
+            surge_ref = min_cluster_t
 
-        # Count factor events before cluster surge
-        factor_pre_surge = sum(1 for t in valid_factor_times if t <= cluster_surge_t)
+        # Count factor events before cluster surge reference
+        factor_pre_surge = sum(1 for t in valid_factor_times if t < surge_ref)
         ratio_pre_surge = factor_pre_surge / len(valid_factor_times)
 
-        if min_factor_t < min_cluster_t or ratio_pre_surge >= 0.50:
-            return "Precedes or triggers issue surge", 0.90
-        elif abs((min_factor_t - min_cluster_t).total_seconds()) <= 86400:  # within 24h
-            return "Coincides with issue surge", 0.75
+        if min_factor_t < (surge_ref - pd.Timedelta(days=1)) or ratio_pre_surge >= 0.50:
+            return "OBSERVED_BEFORE_ISSUE_SURGE", 0.85
+        elif abs((min_factor_t - surge_ref).total_seconds()) <= 86400 * 2:  # within 48h
+            return "OBSERVED_DURING_ISSUE_SURGE", 0.75
         else:
-            return "Follows issue surge (Lagging consequence or delayed report)", 0.55
+            return "OBSERVED_AFTER_ISSUE_SURGE", 0.50
 
     def mine_candidates_for_cluster(
         self,
@@ -139,10 +149,13 @@ class CandidateRootCauseMiner:
         aspect_lists: List[List[Dict[str, Any]]],
         entity_lists: Optional[List[List[str]]] = None,
         timestamps: Optional[List[pd.Timestamp]] = None,
+        detected_surge_date: Optional[str] = None,
+        significant_only: bool = False,
     ) -> List[Dict[str, Any]]:
         """
         Mines candidate root-cause hypotheses for a given issue cluster with statistical
         significance filtering, NPMI, and empirical temporal analysis.
+        Deduplicates factor mentions per document across aspect and entity sources to avoid double-counting.
         """
         n_total = len(df)
         if n_total == 0:
@@ -156,36 +169,32 @@ class CandidateRootCauseMiner:
         cluster_indices = [i for i, m in enumerate(cluster_mask) if m]
         p_cluster = cluster_size / n_total
 
-        # 1. Collect candidate factors
-        factor_indices_map: Dict[str, List[int]] = {}
-        factor_cluster_indices_map: Dict[str, List[int]] = {}
+        # 1. Collect candidate factors using Sets to prevent document double-counting
+        factor_indices_map: Dict[str, set] = {}
+        factor_cluster_indices_map: Dict[str, set] = {}
 
-        # Scan aspects
         for idx in range(n_total):
             in_cluster = cluster_mask[idx]
-            doc_aspects = aspect_lists[idx] if idx < len(aspect_lists) else []
-            seen_in_doc = set()
+            doc_factors = set()
 
+            # Aspect factors
+            doc_aspects = aspect_lists[idx] if idx < len(aspect_lists) else []
             for item in doc_aspects:
                 aspect_name = item.get("aspect")
-                if aspect_name and aspect_name not in seen_in_doc:
-                    seen_in_doc.add(aspect_name)
-                    factor_indices_map.setdefault(aspect_name, []).append(idx)
-                    if in_cluster:
-                        factor_cluster_indices_map.setdefault(aspect_name, []).append(idx)
+                if aspect_name:
+                    doc_factors.add(aspect_name)
 
-        # Scan entities
-        if entity_lists:
-            for idx in range(n_total):
-                in_cluster = cluster_mask[idx]
-                doc_entities = entity_lists[idx] if idx < len(entity_lists) else []
-                seen_entities = set()
-                for ent in doc_entities:
-                    if ent and ent not in seen_entities:
-                        seen_entities.add(ent)
-                        factor_indices_map.setdefault(ent, []).append(idx)
-                        if in_cluster:
-                            factor_cluster_indices_map.setdefault(ent, []).append(idx)
+            # Entity / Metadata factors
+            if entity_lists and idx < len(entity_lists):
+                for ent in entity_lists[idx]:
+                    if ent and str(ent).strip():
+                        doc_factors.add(str(ent).strip())
+
+            # Register document index once per factor
+            for factor in doc_factors:
+                factor_indices_map.setdefault(factor, set()).add(idx)
+                if in_cluster:
+                    factor_cluster_indices_map.setdefault(factor, set()).add(idx)
 
         # 2. Compute 2x2 contingency tables and statistical metrics for candidates
         candidate_evaluations = []
@@ -231,9 +240,9 @@ class CandidateRootCauseMiner:
             # Factor taxonomy
             factor_type, is_tautological = self._classify_factor_type(factor, cluster_name)
 
-            # Temporal precedence
+            # Temporal precedence (strictly non-causal ordering)
             temporal_label, temporal_score = self._determine_temporal_precedence(
-                all_factor_indices, cluster_indices, timestamps
+                all_factor_indices, cluster_indices, timestamps, detected_surge_date
             )
 
             candidate_evaluations.append({
@@ -261,12 +270,18 @@ class CandidateRootCauseMiner:
             item["adjusted_p_value"] = float(adj_p_values[i])
             item["is_statistically_significant"] = bool(sig_mask[i])
 
+            # Filter if significant_only is requested
+            if significant_only and not item["is_statistically_significant"]:
+                continue
+
             # Filter: must meet minimal association threshold or significance
             if item["pmi"] < self.pmi_threshold and item["lift"] < 1.1:
                 continue
 
+            # Association level: Statistically Supported vs Exploratory
+            assoc_level = "STATISTICALLY_SUPPORTED" if item["is_statistically_significant"] else "EXPLORATORY"
+
             # Heuristic association strength score in [0, 1]
-            # Demotes tautological descriptors so explanatory operational factors rank higher
             norm_lift = min(1.0, item["lift"] / 3.0)
             norm_support = min(1.0, item["a"] / max(5, cluster_size * 0.4))
             norm_npmi = max(0.0, item["npmi"])
@@ -294,6 +309,7 @@ class CandidateRootCauseMiner:
                 "fisher_p_value": round(item["raw_p_value"], 5),
                 "adjusted_p_value": round(item["adjusted_p_value"], 5),
                 "is_statistically_significant": item["is_statistically_significant"],
+                "association_level": assoc_level,
                 "is_tautological": item["is_tautological"],
                 "temporal_relationship": item["temporal_relationship"],
                 "confidence": association_strength,  # preserved for API compatibility
@@ -301,12 +317,12 @@ class CandidateRootCauseMiner:
                 "interpretation": (
                     f"Statistical dependency observed between factor '{item['factor']}' and cluster '{cluster_name}' "
                     f"(Lift: {round(item['lift'], 2)}x, NPMI: {round(item['npmi'], 3)}, Support: {item['a']}, "
-                    f"Fisher adj-p: {round(item['adjusted_p_value'], 4)}). "
-                    f"Temporal Precedence: {item['temporal_relationship']}. "
-                    f"This indicates a candidate root cause for operational investigation, but does not establish causality."
+                    f"Fisher adj-p: {round(item['adjusted_p_value'], 4)}, Level: {assoc_level}). "
+                    f"Temporal relationship: {item['temporal_relationship']}. "
+                    f"This indicates an evidence-grounded candidate factor for operational investigation, but does not establish causality."
                 ),
             })
 
         # Rank by association strength descending, favoring explanatory factors over tautological
-        hypotheses.sort(key=lambda h: (not h["is_tautological"], h["association_strength_score"]), reverse=True)
+        hypotheses.sort(key=lambda h: (not h["is_tautological"], h["is_statistically_significant"], h["association_strength_score"]), reverse=True)
         return hypotheses[:6]

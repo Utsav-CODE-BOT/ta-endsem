@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import threading
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 import numpy as np
@@ -59,7 +60,9 @@ class PipelineService:
         self.current_emerging: List[Dict[str, Any]] = []
         self.current_graph: Dict[str, Any] = {"nodes": [], "links": []}
         self.temporal_available: bool = True
+        self.similarity_threshold: float = 0.35
         self.is_ready = False
+        self._lock = threading.Lock()
 
     @classmethod
     def get_instance(cls) -> "PipelineService":
@@ -230,63 +233,80 @@ class PipelineService:
         if len(df) == 0:
             return {"status": "error", "message": "Cannot run pipeline on empty dataframe."}
 
-        logger.info("Executing VoiceMiner pipeline on %d records (n_clusters=%d)...", len(df), n_clusters)
-        self.current_df = df
+        with self._lock:
+            self.similarity_threshold = float(similarity_threshold)
+            logger.info("Executing VoiceMiner pipeline on %d records (n_clusters=%d, sim_thresh=%.2f)...", len(df), n_clusters, self.similarity_threshold)
+            self.current_df = df
 
-        # Re-initialize clusterer with user-specified n_clusters
-        self.clusterer = IssueClusterer(n_clusters=n_clusters, random_state=42)
-        self.evidence_retriever = EvidenceRetriever(embedder=self.embedder, top_k=15)
-        self.candidate_miner = CandidateRootCauseMiner(min_support=2)
+            # Re-initialize clusterer with user-specified n_clusters
+            self.clusterer = IssueClusterer(n_clusters=n_clusters, random_state=42)
+            self.evidence_retriever = EvidenceRetriever(embedder=self.embedder, top_k=15)
+            self.candidate_miner = CandidateRootCauseMiner(min_support=2)
 
-        texts = df["clean_text"].tolist()
-        timestamps = df["timestamp"].tolist()
-        sources = df["source"].tolist()
+            texts = df["clean_text"].tolist()
+            timestamps = df["timestamp"].tolist()
+            sources = df["source"].tolist()
 
-        # 1. Generate & Cache Embeddings
-        logger.info("Generating sentence embeddings...")
-        embeddings = self.embedder.encode(texts, batch_size=64, use_cache=True)
-        self.current_embeddings = embeddings
+            # 1. Generate & Cache Embeddings
+            logger.info("Generating sentence embeddings...")
+            embeddings = self.embedder.encode(texts, batch_size=64, use_cache=True)
+            self.current_embeddings = embeddings
 
-        # 2. Sentiment & Emotion Analysis (Separating model prediction from provided ground truth)
-        logger.info("Inferring transformer sentiment & emotion distribution...")
-        predicted_sentiments = []
-        predicted_scores = []
-        effective_sentiments = []
-        sentiment_origins = []
-        emotions = []
-        emotion_scores = []
+            # 2. Sentiment & Emotion Analysis (Strictly separating model prediction from provided ground truth)
+            logger.info("Inferring transformer sentiment & emotion distribution (use_dataset_labels=%s)...", use_dataset_labels)
+            predicted_sentiments = []
+            predicted_scores = []
+            effective_sentiments = []
+            sentiment_origins = []
+            emotions = []
+            emotion_scores = []
 
-        for i, row in df.iterrows():
-            text = row["clean_text"]
-            provided = row.get("provided_sentiment")
-            if provided in ["positive", "neutral", "negative"]:
-                pred_label = provided
-                pred_score = 0.95
-                effective_sent = provided
-                origin = "DATASET_LABEL"
+            if not use_dataset_labels:
+                # Mode A: Model prediction - run actual transformer inference, zero ground-truth leakage
+                batch_preds = self.sentiment_analyzer.analyze_batch(texts, batch_size=64)
+                for i, pred in enumerate(batch_preds):
+                    pred_label = pred["label"]
+                    pred_score = pred["score"]
+                    predicted_sentiments.append(pred_label)
+                    predicted_scores.append(pred_score)
+                    effective_sentiments.append(pred_label)
+                    sentiment_origins.append("MODEL_PREDICTION")
+                    e_res = self.emotion_detector.detect(texts[i], text_embedding=embeddings[i])
+                    emotions.append(e_res["primary_emotion"])
+                    emotion_scores.append(e_res["score"])
             else:
-                s_res = self.sentiment_analyzer.analyze_single(text)
-                pred_label = s_res["label"]
-                pred_score = s_res["score"]
-                effective_sent = pred_label
-                origin = "MODEL_PREDICTION"
+                # Mode B: Dataset label exploration
+                for i, row in df.iterrows():
+                    text = row["clean_text"]
+                    provided = row.get("provided_sentiment")
+                    if provided in ["positive", "neutral", "negative"]:
+                        predicted_sentiments.append(None)
+                        predicted_scores.append(None)
+                        effective_sentiments.append(provided)
+                        sentiment_origins.append("DATASET_LABEL")
+                    else:
+                        s_res = self.sentiment_analyzer.analyze_single(text)
+                        pred_label = s_res["label"]
+                        pred_score = s_res["score"]
+                        predicted_sentiments.append(pred_label)
+                        predicted_scores.append(pred_score)
+                        effective_sentiments.append(pred_label)
+                        sentiment_origins.append("MODEL_PREDICTION")
 
-            predicted_sentiments.append(pred_label)
-            predicted_scores.append(pred_score)
-            effective_sentiments.append(effective_sent)
-            sentiment_origins.append(origin)
+                    e_res = self.emotion_detector.detect(text, text_embedding=embeddings[i])
+                    emotions.append(e_res["primary_emotion"])
+                    emotion_scores.append(e_res["score"])
 
-            e_res = self.emotion_detector.detect(text, text_embedding=embeddings[i])
-            emotions.append(e_res["primary_emotion"])
-            emotion_scores.append(e_res["score"])
-
-        df["predicted_sentiment"] = predicted_sentiments
-        df["predicted_score"] = predicted_scores
-        df["sentiment"] = effective_sentiments
-        df["sentiment_score"] = predicted_scores
-        df["sentiment_origin"] = sentiment_origins
-        df["emotion"] = emotions
-        df["emotion_score"] = emotion_scores
+            df["provided_sentiment"] = [row.get("provided_sentiment") for _, row in df.iterrows()]
+            df["predicted_sentiment"] = predicted_sentiments
+            df["predicted_score"] = predicted_scores
+            df["predicted_sentiment_score"] = predicted_scores
+            df["effective_sentiment"] = effective_sentiments
+            df["sentiment"] = effective_sentiments
+            df["sentiment_score"] = predicted_scores
+            df["sentiment_origin"] = sentiment_origins
+            df["emotion"] = emotions
+            df["emotion_score"] = emotion_scores
 
         # 3. Aspect Extraction
         logger.info("Extracting customer aspects...")
@@ -349,6 +369,7 @@ class PipelineService:
 
             # Pass ACTUAL empirical cluster coherence instead of static 0.78
             empirical_coherence = cl.get("cluster_coherence", 0.70)
+            coherence_reliable = cl.get("coherence_reliable", True)
 
             emerging_score_data = self.emerging_scorer.score_issue(
                 cluster_id=c_id,
@@ -361,11 +382,13 @@ class PipelineService:
                 cluster_coherence=empirical_coherence,
                 first_detected_date=first_date,
                 surge_probability=trend.get("surge_probability"),
+                coherence_reliable=coherence_reliable,
             )
             emerging_score_data["trend_history"] = trend.get("history", [])
             emerging_score_data["cusum_change_detected"] = trend.get("cusum_change_detected", False)
             emerging_score_data["cusum_change_date"] = trend.get("cusum_change_date")
             emerging_score_data["data_sufficiency"] = trend.get("data_sufficiency", "SUFFICIENT")
+            cl["cusum_change_date"] = trend.get("cusum_change_date")
             emerging_issues.append(emerging_score_data)
 
             # Update cluster profile with sentiment breakdown
@@ -391,10 +414,36 @@ class PipelineService:
         self.current_emerging = emerging_issues
         self.current_clusters = cluster_profiles
 
-        # 7. Candidate Root-Cause Mining with Real Timestamps
+        # 7. Candidate Root-Cause Mining with Real Timestamps & Explanatory Metadata
         logger.info("Mining evidence-supported candidate root causes...")
         all_hypotheses = []
-        entity_lists = [[s] for s in sources]
+
+        ALLOWLIST_METADATA_FIELDS = {
+            "product", "component", "app_version", "software_version",
+            "service_component", "platform", "location", "operational_event",
+            "module", "payment_gateway", "gateway", "service", "endpoint", "version"
+        }
+        LEAKAGE_METADATA_FIELDS = {
+            "sentiment", "airline_sentiment", "provided_sentiment", "rating",
+            "ground_truth", "negativereason", "category_label", "incident_label",
+            "dataset_type", "clean_text", "normalized_text", "original_text", "text", "id"
+        }
+
+        entity_lists = []
+        for _, row in df.iterrows():
+            row_entities = set()
+            src = row.get("source")
+            if src and pd.notna(src) and str(src).strip():
+                row_entities.add(str(src).strip())
+
+            meta = row.get("metadata", {})
+            if isinstance(meta, dict):
+                for k, v in meta.items():
+                    k_clean = str(k).lower().strip()
+                    if k_clean in ALLOWLIST_METADATA_FIELDS and k_clean not in LEAKAGE_METADATA_FIELDS:
+                        if v and pd.notna(v) and str(v).strip():
+                            row_entities.add(str(v).strip())
+            entity_lists.append(list(row_entities))
 
         for cl in cluster_profiles:
             c_id = cl["cluster_id"]
@@ -406,6 +455,7 @@ class PipelineService:
                 aspect_lists=all_aspects,
                 entity_lists=entity_lists,
                 timestamps=timestamps,
+                detected_surge_date=cl.get("cusum_change_date"),
             )
             all_hypotheses.extend(hyps)
 
@@ -542,11 +592,15 @@ class PipelineService:
             db.rollback()
             logger.error("Failed saving pipeline state to database: %s", e)
 
-    def analyze_realtime_text(self, raw_text: str) -> Dict[str, Any]:
+    def analyze_realtime_text(
+        self,
+        raw_text: str,
+        similarity_threshold: Optional[float] = None,
+    ) -> Dict[str, Any]:
         """
         Processes single customer feedback in real-time.
         Computes sentiment, emotion, aspects, nearest issue cluster (with open-set unknown detection),
-        and hypothesis-aware evidence.
+        and hypothesis-aware evidence using configured similarity_threshold.
         """
         clean_text = self.preprocessor.clean(raw_text)
         embedding = self.embedder.encode(clean_text, use_cache=True)
@@ -563,9 +617,11 @@ class PipelineService:
         candidate_cause = None
         evidence_list = []
 
+        eff_threshold = float(similarity_threshold) if similarity_threshold is not None else self.similarity_threshold
+
         if self.is_ready and self.current_clusters and self.current_embeddings is not None:
-            # Use open-set cluster prediction with centroid distance
-            pred_match = self.clusterer.predict_cluster(single_emb, similarity_threshold=0.35)
+            # Use open-set cluster prediction with centroid distance and propagated threshold
+            pred_match = self.clusterer.predict_cluster(single_emb, similarity_threshold=eff_threshold)
             matched_issue = {
                 "issue_id": pred_match["cluster_id"],
                 "name": pred_match["name"],

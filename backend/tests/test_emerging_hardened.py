@@ -50,8 +50,9 @@ def test_priority_vs_confidence_separation():
         recent_volume=30,
         negative_sentiment_ratio=0.9,
     )
-    assert res_high_support["confidence_level"] == "HIGH_STATISTICAL_SUPPORT"
+    assert res_high_support["confidence_level"] == "HIGH_SAMPLE_SUPPORT"
     assert res_high_support["evidence_sufficient"] is True
+    assert res_high_support["coherence_reliable"] is True
 
 
 def test_growth_monotonicity():

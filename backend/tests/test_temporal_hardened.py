@@ -60,3 +60,44 @@ def test_sparse_data_guardrail():
     trend = analyzer.analyze_cluster_trend(df_ts, cluster_id=0)
     assert trend["data_sufficiency"] == "SPARSE_DATA"
     assert trend["z_score_anomalies"] == 0
+
+
+def test_bayesian_surge_probability_scenarios():
+    # 1. Stable prevalence: 10% in baseline (10/100) and 10% in recent (10/100)
+    prob_stable = TemporalAnalyzer.compute_bayesian_surge_probability(
+        y_b=10, n_b=100, y_r=10, n_r=100, random_seed=42
+    )
+    assert prob_stable is not None
+    assert 0.40 <= prob_stable <= 0.60
+
+    # 2. Increasing prevalence: 10% in baseline (10/100) -> 35% in recent (35/100)
+    prob_surge = TemporalAnalyzer.compute_bayesian_surge_probability(
+        y_b=10, n_b=100, y_r=35, n_r=100, random_seed=42
+    )
+    assert prob_surge is not None
+    assert prob_surge >= 0.95
+
+    # 3. Decreasing prevalence: 30% in baseline (30/100) -> 5% in recent (5/100)
+    prob_decline = TemporalAnalyzer.compute_bayesian_surge_probability(
+        y_b=30, n_b=100, y_r=5, n_r=100, random_seed=42
+    )
+    assert prob_decline is not None
+    assert prob_decline <= 0.05
+
+    # 4. Total volume increases 10x, but prevalence stays constant (10% -> 10%)
+    # Total source volume explosion must NOT be flagged as an issue surge
+    prob_source_growth = TemporalAnalyzer.compute_bayesian_surge_probability(
+        y_b=10, n_b=100, y_r=100, n_r=1000, random_seed=42
+    )
+    assert prob_source_growth is not None
+    assert 0.35 <= prob_source_growth <= 0.60
+
+    # 5. Invalid / empty cases return None
+    assert TemporalAnalyzer.compute_bayesian_surge_probability(0, 0, 5, 10) is None
+    assert TemporalAnalyzer.compute_bayesian_surge_probability(5, 10, 0, 0) is None
+    assert TemporalAnalyzer.compute_bayesian_surge_probability(15, 10, 5, 10) is None  # y > n
+
+    # 6. Reproducibility with fixed seed
+    p1 = TemporalAnalyzer.compute_bayesian_surge_probability(10, 100, 20, 100, random_seed=123)
+    p2 = TemporalAnalyzer.compute_bayesian_surge_probability(10, 100, 20, 100, random_seed=123)
+    assert p1 == p2

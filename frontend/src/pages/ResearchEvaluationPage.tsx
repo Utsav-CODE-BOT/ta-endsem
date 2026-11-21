@@ -69,6 +69,7 @@ export const ResearchEvaluationPage: React.FC = () => {
                 <th style={{ padding: '8px 10px' }}>Silhouette (Higher Better)</th>
                 <th style={{ padding: '8px 10px' }}>Davies-Bouldin (Lower Better)</th>
                 <th style={{ padding: '8px 10px' }}>Calinski-Harabasz</th>
+                <th style={{ padding: '8px 10px' }}>Topic Diversity</th>
               </tr>
             </thead>
             <tbody>
@@ -95,6 +96,9 @@ export const ResearchEvaluationPage: React.FC = () => {
                     </td>
                     <td style={{ padding: '10px', fontFamily: 'monospace', color: 'var(--text-muted)' }}>
                       {data.calinski_harabasz_index}
+                    </td>
+                    <td style={{ padding: '10px', fontFamily: 'monospace', color: 'var(--teal)' }}>
+                      {data.topic_diversity !== undefined ? data.topic_diversity : '—'}
                     </td>
                   </tr>
                 );
@@ -137,13 +141,13 @@ export const ResearchEvaluationPage: React.FC = () => {
           <div style={{ background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: '4px', padding: '12px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Macro Precision</div>
             <div style={{ fontSize: '20px', fontWeight: 700, fontFamily: 'monospace', color: 'var(--text-main)', marginTop: '4px' }}>
-              {sentiment.macro_precision?.toFixed(4) || '0.7890'}
+              {sentiment.macro_precision?.toFixed(4) || '0.7829'}
             </div>
           </div>
           <div style={{ background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: '4px', padding: '12px' }}>
             <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Macro Recall</div>
             <div style={{ fontSize: '20px', fontWeight: 700, fontFamily: 'monospace', color: 'var(--text-main)', marginTop: '4px' }}>
-              {sentiment.macro_recall?.toFixed(4) || '0.8040'}
+              {sentiment.macro_recall?.toFixed(4) || '0.8123'}
             </div>
           </div>
         </div>

@@ -6,19 +6,21 @@
   "removed_records_count": 2,
   "n_clusters": 6,
   "random_seed": 42,
-  "execution_timestamp": "2026-11-21 10:16:49 UTC",
+  "execution_timestamp": "2026-11-21 10:40:24 UTC",
   "baselines": {
     "baseline_1_tfidf_kmeans": {
       "method": "TF-IDF (1500d) + K-Means",
       "silhouette_score": 0.0176,
       "davies_bouldin_index": 6.3747,
-      "calinski_harabasz_index": 4.56
+      "calinski_harabasz_index": 4.56,
+      "topic_diversity": 0.75
     },
     "baseline_2_sbert_kmeans": {
       "method": "Sentence-BERT (384d) + K-Means",
       "silhouette_score": 0.0347,
       "davies_bouldin_index": 3.8406,
-      "calinski_harabasz_index": 15.32
+      "calinski_harabasz_index": 15.32,
+      "topic_diversity": 0.7292
     },
     "proposed_sbert_reduced_kmeans": {
       "method": "Sentence-BERT + SVD(10d) + K-Means + c-TF-IDF (Proposed)",

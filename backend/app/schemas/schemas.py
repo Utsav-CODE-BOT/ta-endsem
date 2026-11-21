@@ -120,6 +120,7 @@ class EvidenceResponse(BaseModel):
 
 class TextAnalyzeRequest(BaseModel):
     text: str
+    similarity_threshold: Optional[float] = None
 
 
 class TextAnalyzeResponse(BaseModel):

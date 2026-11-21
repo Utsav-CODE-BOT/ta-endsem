@@ -17,7 +17,7 @@
     "has_aspects": true,
     "has_statistical_filtering": true,
     "has_evidence": true,
-    "observation": "Balanced multi-factor scoring correctly surfaces high-velocity surge (+310%) and critical luggage losses."
+    "observation": "Balanced multi-factor scoring surfaces high-velocity surge (+310%) and critical luggage losses."
   },
   "w_o_temporal": {
     "description": "Without Temporal Modeling (Static Volume Only)",

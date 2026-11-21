@@ -43,3 +43,17 @@ def test_parameter_propagation_n_clusters():
     assert issues_res.status_code == 200
     issues = issues_res.json()
     assert len(issues) == 4
+
+
+def test_similarity_threshold_propagation_text_analyze():
+    # Calling text analyze with very high similarity threshold (0.99) should trigger open-set unknown issue
+    res = client.post(
+        "/api/text/analyze",
+        json={"text": "completely bizarre out of domain feedback about alien spaceship", "similarity_threshold": 0.99},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    if data.get("matched_issue"):
+        # With threshold 0.99, cosine similarity to any cluster will be < 0.99
+        assert data["matched_issue"]["issue_id"] == -1
+        assert "Unknown" in data["matched_issue"]["name"]

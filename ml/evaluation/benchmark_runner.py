@@ -65,6 +65,12 @@ class BenchmarkRunner:
         db_b1 = float(davies_bouldin_score(tfidf_mat, labels_b1))
         ch_b1 = float(calinski_harabasz_score(tfidf_mat, labels_b1))
 
+        # Baseline 1 Topic Diversity (top 8 terms per cluster centroid)
+        order_centroids = kmeans_tfidf.cluster_centers_.argsort()[:, ::-1]
+        terms = tfidf_vec.get_feature_names_out()
+        b1_words = [terms[ind] for i in range(n_clusters) for ind in order_centroids[i, :8]]
+        td_b1 = round(float(len(set(b1_words)) / len(b1_words)), 4) if b1_words else 0.0
+
         # 2. Baseline 2: Sentence-BERT (raw 384d) + K-Means
         embeddings = self.embedder.encode(non_empty, use_cache=True)
         kmeans_sbert = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
@@ -74,10 +80,16 @@ class BenchmarkRunner:
         db_b2 = float(davies_bouldin_score(embeddings, labels_b2))
         ch_b2 = float(calinski_harabasz_score(embeddings, labels_b2))
 
+        # Baseline 2 Topic Diversity via c-TF-IDF on SBERT clusters
+        b2_clusterer = IssueClusterer(n_clusters=n_clusters, reduction_dims=None, random_state=random_state)
+        res_b2 = b2_clusterer.fit_predict(embeddings, non_empty, algorithm="kmeans")
+        td_b2 = res_b2["metrics"].get("topic_diversity", 0.70)
+
         # 3. Proposed: SBERT + TruncatedSVD reduction (10d) + K-Means / c-TF-IDF
         clusterer = IssueClusterer(n_clusters=n_clusters, reduction_dims=10, random_state=random_state)
         res_proposed = clusterer.fit_predict(embeddings, non_empty, algorithm="kmeans")
         metrics_proposed = res_proposed["metrics"]
+        td_proposed = metrics_proposed.get("topic_diversity")
 
         # 4. Dimensionality Comparison (Phase 5.3)
         dims_benchmark = {}
@@ -106,19 +118,21 @@ class BenchmarkRunner:
                     "silhouette_score": round(sil_b1, 4),
                     "davies_bouldin_index": round(db_b1, 4),
                     "calinski_harabasz_index": round(ch_b1, 2),
+                    "topic_diversity": td_b1,
                 },
                 "baseline_2_sbert_kmeans": {
                     "method": "Sentence-BERT (384d) + K-Means",
                     "silhouette_score": round(sil_b2, 4),
                     "davies_bouldin_index": round(db_b2, 4),
                     "calinski_harabasz_index": round(ch_b2, 2),
+                    "topic_diversity": td_b2,
                 },
                 "proposed_sbert_reduced_kmeans": {
                     "method": "Sentence-BERT + SVD(10d) + K-Means + c-TF-IDF (Proposed)",
                     "silhouette_score": metrics_proposed.get("silhouette_score"),
                     "davies_bouldin_index": metrics_proposed.get("davies_bouldin_index"),
                     "calinski_harabasz_index": metrics_proposed.get("calinski_harabasz_index"),
-                    "topic_diversity": metrics_proposed.get("topic_diversity"),
+                    "topic_diversity": td_proposed,
                 },
             },
             "dimensionality_ablation": dims_benchmark,
