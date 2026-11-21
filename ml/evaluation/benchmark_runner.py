@@ -37,7 +37,8 @@ class BenchmarkRunner:
 
     def run_clustering_comparison(
         self,
-        texts: List[str],
+        texts: Optional[List[str]] = None,
+        sample: Optional[Any] = None,
         n_clusters: int = 6,
         random_state: int = 42,
         dataset_name: str = "data/samples/airline_sample_1000.csv",
@@ -48,12 +49,26 @@ class BenchmarkRunner:
         2. Baseline 2: Sentence-BERT (raw 384d) + K-Means
         3. Proposed: Sentence-BERT + TruncatedSVD (10d) + K-Means / c-TF-IDF
         Also reports Topic Diversity and Dimensionality Ablation.
+        Accepts either an EvaluationSample (preferred for cross-benchmark alignment) or a raw list of texts.
         """
-        raw_count = len(texts)
-        clean_texts = [self.preprocessor.clean(t) for t in texts]
-        non_empty = [t for t in clean_texts if len(t.split()) >= 3]
-        post_count = len(non_empty)
-        removed_count = raw_count - post_count
+        if sample is not None:
+            non_empty = list(sample.clean_texts)
+            raw_count = int(sample.raw_sample_size)
+            post_count = int(sample.post_filtering_sample_size)
+            removed_count = raw_count - post_count
+            record_ids = list(sample.record_ids)
+            dataset_name = sample.dataset_name or dataset_name
+            if sample.random_seed is not None:
+                random_state = sample.random_seed
+        else:
+            if texts is None:
+                raise ValueError("Must provide either 'sample' or 'texts'.")
+            raw_count = len(texts)
+            clean_texts = [self.preprocessor.clean(t) for t in texts]
+            non_empty = [t for t in clean_texts if len(t.split()) >= 3]
+            post_count = len(non_empty)
+            removed_count = raw_count - post_count
+            record_ids = list(range(post_count))
 
         # 1. Baseline 1: TF-IDF + K-Means
         tfidf_vec = TfidfVectorizer(max_features=1500, stop_words="english")
@@ -111,6 +126,7 @@ class BenchmarkRunner:
             "removed_records_count": removed_count,
             "n_clusters": n_clusters,
             "random_seed": random_state,
+            "record_ids": record_ids,
             "execution_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "baselines": {
                 "baseline_1_tfidf_kmeans": {

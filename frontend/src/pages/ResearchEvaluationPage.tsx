@@ -252,16 +252,42 @@ export const ResearchEvaluationPage: React.FC = () => {
                     </td>
                     <td style={{ padding: '10px', fontFamily: 'monospace', fontSize: '11.5px' }}>
                       {conf.clustering_silhouette !== undefined && (
-                        <div>Sil: <strong style={{ color: 'var(--green)' }}>{conf.clustering_silhouette}</strong> (DB: {conf.davies_bouldin})</div>
+                        <div>
+                          <div>Sil: <strong style={{ color: 'var(--green)' }}>{conf.clustering_silhouette}</strong> (DB: {conf.davies_bouldin})</div>
+                          {conf.top_prioritized_issue && (
+                            <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Top: {conf.top_prioritized_issue} ({conf.top_issue_score})</div>
+                          )}
+                        </div>
+                      )}
+                      {conf.max_rank_displacement !== undefined && (
+                        <div>
+                          <div>Max Rank Shift: <strong style={{ color: '#b45309' }}>{conf.max_rank_displacement} pos</strong></div>
+                          <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Top: {conf.top_prioritized_issue || 'N/A'}</div>
+                        </div>
                       )}
                       {conf.candidates_with_fdr !== undefined && (
-                        <div>FDR Pruning: <strong>{conf.candidates_without_fdr}</strong> → <strong style={{ color: 'var(--teal)' }}>{conf.candidates_with_fdr}</strong></div>
+                        <div>
+                          <div>FDR Pruning: <strong>{conf.candidates_without_fdr}</strong> → <strong style={{ color: 'var(--teal)' }}>{conf.candidates_with_fdr}</strong></div>
+                          {conf.fdr_pruned_count !== undefined && (
+                            <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>Pruned: {conf.fdr_pruned_count} non-sig</div>
+                          )}
+                        </div>
                       )}
                       {conf.uncertain_abstention_count !== undefined && (
-                        <div>Abstentions: <strong style={{ color: 'var(--teal)' }}>{conf.uncertain_abstention_count}</strong> (Supp: {conf.supporting_count})</div>
+                        <div>
+                          <div>Abstained: <strong style={{ color: 'var(--teal)' }}>{conf.uncertain_abstention_count}</strong></div>
+                          <div style={{ fontSize: '10.5px', color: 'var(--text-muted)' }}>
+                            Verified Supp: <strong style={{ color: 'var(--green)' }}>{conf.verified_supporting_count ?? 0}</strong> (Naive: {conf.naive_supporting_count ?? 0})
+                          </div>
+                        </div>
                       )}
-                      {conf.weights_used && (
-                        <div style={{ color: 'var(--text-muted)' }}>Custom Weights</div>
+                      {conf.clustering_silhouette === undefined &&
+                       conf.max_rank_displacement === undefined &&
+                       conf.candidates_with_fdr === undefined &&
+                       conf.uncertain_abstention_count === undefined && (
+                        <div style={{ color: 'var(--text-muted)' }}>
+                          {conf.weights_used ? 'Custom Weights' : 'Not evaluated'}
+                        </div>
                       )}
                     </td>
                     <td style={{ padding: '10px', fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.45 }}>

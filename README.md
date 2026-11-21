@@ -130,13 +130,13 @@ All metrics below reflect **actual, measured experimental results** generated fr
 
 | Config | Component Removed / Replaced | Key Measured Metric | Impact / Measured Effect |
 | :--- | :--- | :---: | :--- |
-| **A0** | **Full VoiceMiner Pipeline** | Silhouette: 0.0384, DB: 3.8153 | Balanced multi-factor ranking with FDR significance control and stance verification. |
-| **A1** | **Without Temporal Dynamics** | Static volume only | Static volume bound; high-velocity emerging surges rank low until historical volume accumulates. |
-| **A2** | **Without Semantic Embeddings** | Silhouette: 0.0176, DB: 6.3747 | -54.2% relative silhouette drop; cluster dispersion increased by +67.1%. |
-| **A3** | **Without Sentiment Weighting** | Uniform valence (0.33) | Neutral operational inquiries compete directly with severe service failures. |
-| **A4** | **Without Statistical Filtering** | 3 raw vs 2 FDR-filtered | Benjamini-Hochberg procedure controls the False Discovery Rate (FDR) at alpha=0.05, pruning non-significant co-occurring noise. |
-| **A5** | **Without Evidence Stance Verification** | Stance vs Raw Retrieval | Raw retrieval forces false positive support; stance verification successfully abstains on 15 unverified cases (suppressing 6 false supports). |
-| **A6** | **Without Dimensionality Reduction** | Silhouette: 0.0347, DB: 3.8406 | SVD 10d preserves clustering structure while reducing vector storage by 97.4%. |
+| **A0** | **Full VoiceMiner Pipeline** | Silhouette: 0.0384, DB: 3.8153 | Balanced multi-factor ranking (top: 'Usairways & Americanair', score: 0.7195) with FDR significance control and stance verification. |
+| **A1** | **Without Temporal Dynamics** | Max rank shift: 2 | Under empirical temporal modeling on N=498 customer texts, top cluster is 'Usairways & Americanair'; without temporal features, ranking shifts by up to 2 position(s), prioritizing static cumulative volume ('Flight & Cancelled'). |
+| **A2** | **Without Semantic Embeddings** | Silhouette: 0.0176, DB: 6.3747 | Lexical TF-IDF (1500d unigrams): -54.2% relative silhouette drop; cluster dispersion increased (+67.1%). |
+| **A3** | **Without Sentiment Weighting** | Max rank shift: 1 | Uniform sentiment valence shifts issue rankings by up to 1 position as complaints lose priority boost over neutral volume. |
+| **A4** | **Without Statistical Filtering** | 3 raw vs 2 FDR-filtered | Benjamini-Hochberg procedure controls FDR at alpha=0.05, pruning non-significant co-occurring candidate factors. |
+| **A5** | **Without Evidence Stance Verification** | 14 naive vs 6 verified supp (9 abstained) | Observed classification changes and abstentions on 15 identical retrieved documents: stance verification abstained on 9 items (8 lacking factor reference to 'delay'), guarding against confirmation bias. |
+| **A6** | **Without Dimensionality Reduction** | Silhouette: 0.0347, DB: 3.8406 | SVD 10d preserves clustering structure (0.0384 vs 0.0347) while reducing vector storage by 97.4%. |
 
 ### Controlled EmergingScore Sensitivity Demonstration
 
@@ -186,7 +186,7 @@ pip install -r requirements.txt
 
 ### 2. Run Tests & Empirical Experiments
 ```bash
-# Run complete test suite (40 passing unit and integration tests)
+# Run complete test suite (50 passing unit and integration tests)
 pytest backend/tests -v
 
 # Run research benchmark evaluations (RQ1 - RQ5)

@@ -30,13 +30,15 @@ class AblationStudyRunner:
 
     def run_empirical_component_ablations(
         self,
-        df: pd.DataFrame,
+        df: Optional[pd.DataFrame] = None,
+        sample: Optional[Any] = None,
         n_clusters: int = 6,
         random_seed: int = 42,
     ) -> Dict[str, Any]:
         """
         Executes genuine component-level pipeline ablations using real customer feedback records.
-        Each configuration genuinely replaces or removes the corresponding pipeline module.
+        Evaluates the exact unified evaluation sample population (preserving record IDs, clean texts,
+        timestamps, sentiments, and metadata alignment).
         """
         from ml.preprocessing.text_cleaner import TextPreprocessor
         from ml.embeddings.sentence_embedder import SentenceEmbedder
@@ -44,66 +46,51 @@ class AblationStudyRunner:
         from ml.rootcause.candidate_miner import CandidateRootCauseMiner
         from ml.evidence.evidence_retriever import EvidenceRetriever
         from ml.emerging.emerging_scorer import EmergingScorer
+        from ml.aspects.aspect_extractor import AspectExtractor
+        from ml.temporal.temporal_analyzer import TemporalAnalyzer
+        from ml.evaluation.sample_selector import DeterministicSampleSelector
 
-        preprocessor = TextPreprocessor()
         embedder = SentenceEmbedder()
 
-        # Extract aligned texts, timestamps, and sentiments from real benchmark dataframe
-        text_col = "text" if "text" in df.columns else "clean_text"
-        time_col = None
-        for c in ["tweet_created", "timestamp", "date", "created_at"]:
-            if c in df.columns:
-                time_col = c
-                break
-        sent_col = None
-        for c in ["airline_sentiment", "sentiment"]:
-            if c in df.columns:
-                sent_col = c
-                break
+        # 1. Unify evaluation sample selection
+        if sample is not None:
+            eval_sample = sample
+        elif df is not None:
+            selector = DeterministicSampleSelector()
+            eval_sample = selector.select_sample(df, sample_size=500, random_seed=random_seed)
+        else:
+            raise ValueError("Must provide either 'sample' or 'df'.")
 
-        clean_rows = []
-        for idx, row in df.iterrows():
-            raw_t = row.get(text_col)
-            if pd.isna(raw_t):
-                continue
-            cleaned = preprocessor.clean(str(raw_t))
-            if len(cleaned.split()) >= 3:
-                clean_rows.append({
-                    "text": cleaned,
-                    "timestamp": row.get(time_col) if time_col else None,
-                    "sentiment": row.get(sent_col) if sent_col else "neutral",
-                })
-            if len(clean_rows) >= 500:
-                break
-
-        texts = [r["text"] for r in clean_rows]
-        raw_timestamps = [r["timestamp"] for r in clean_rows]
-        timestamps = [pd.to_datetime(t, utc=True) if pd.notna(t) else None for t in raw_timestamps]
-        sentiments = [str(r["sentiment"]).lower() if pd.notna(r["sentiment"]) else "neutral" for r in clean_rows]
-        n_docs = len(texts)
+        texts = list(eval_sample.clean_texts)
+        timestamps = list(eval_sample.timestamps)
+        sentiments = list(eval_sample.sentiments)
+        record_ids = list(eval_sample.record_ids)
+        raw_sample_size = int(eval_sample.raw_sample_size)
+        n_docs = int(eval_sample.post_filtering_sample_size)
+        dataset_name = str(eval_sample.dataset_name)
 
         # Precompute dense embeddings
         embeddings = embedder.encode(texts, use_cache=True)
 
         results = {
             "experiment_name": "RQ4_RQ5_Empirical_Component_Ablation",
-            "dataset_identifier": "airline_sample_1000.csv",
-            "input_sample_size": len(df),
+            "dataset_identifier": dataset_name,
+            "input_sample_size": raw_sample_size,
             "post_filtering_sample_size": n_docs,
             "random_seed": random_seed,
+            "record_ids": record_ids,
             "execution_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "configurations": {},
         }
 
-        # --- A0: Full System (End-to-End Execution with Real Temporal & Sentiment Dynamics) ---
-        from ml.temporal.temporal_analyzer import TemporalAnalyzer
+        # --- A0: Full System (End-to-End Pipeline Execution) ---
         clusterer_a0 = IssueClusterer(n_clusters=n_clusters, reduction_dims=10, random_state=random_seed)
         res_a0 = clusterer_a0.fit_predict(embeddings, texts, algorithm="kmeans")
         m_a0 = res_a0["metrics"]
         cluster_labels = res_a0["labels"]
         cluster_profiles = res_a0["cluster_profiles"]
 
-        # Build real empirical time series from aligned timestamps
+        # Temporal time series
         temporal_analyzer = TemporalAnalyzer()
         time_series_df = temporal_analyzer.build_time_series(
             timestamps=timestamps,
@@ -151,17 +138,57 @@ class AblationStudyRunner:
 
         cluster_scores_a0.sort(key=lambda x: x["emerging_score"], reverse=True)
         top_a0 = cluster_scores_a0[0]["name"]
+        top_c_id = cluster_scores_a0[0]["cluster_id"]
         a0_ranks = {item["cluster_id"]: r for r, item in enumerate(cluster_scores_a0)}
+
+        # Run actual aspect extraction, candidate root cause mining, and evidence retrieval within A0
+        aspect_extractor = AspectExtractor()
+        all_aspects = [aspect_extractor.extract_aspects(t) for t in texts]
+        miner_a0 = CandidateRootCauseMiner(min_support=2, alpha_significance=0.05)
+        a0_hyps = miner_a0.mine_candidates_for_cluster(
+            cluster_id=top_c_id,
+            cluster_name=top_a0,
+            df=pd.DataFrame({"id": range(n_docs)}),
+            cluster_labels=cluster_labels,
+            aspect_lists=all_aspects,
+            significant_only=True,
+        )
+        top_candidate_factor = a0_hyps[0]["candidate_factor"] if a0_hyps else "delay"
+
+        ev_retriever_a0 = EvidenceRetriever(embedder=embedder, top_k=15)
+        ev_res_a0 = ev_retriever_a0.retrieve_evidence(
+            query=top_a0,
+            texts=texts,
+            embeddings=embeddings,
+            sentiments=sentiments,
+            candidate_factor=top_candidate_factor,
+            similarity_threshold=0.20,
+        )
+        a0_verified_supp = len(ev_res_a0.get("supporting", []))
 
         results["configurations"]["A0_full_system"] = {
             "configuration": "A0_Full_System",
-            "description": "Full VoiceMiner Pipeline (SBERT + SVD-10d + K-Means + c-TF-IDF + Prior-Only Temporal + FDR + Stance)",
+            "description": "Full VoiceMiner Pipeline (SBERT + SVD-10d + K-Means + c-TF-IDF + Prior-Only Temporal + Sentiment + Aspect Mining + FDR + Stance)",
             "clustering_silhouette": m_a0["silhouette_score"],
             "davies_bouldin": m_a0["davies_bouldin_index"],
             "topic_diversity": m_a0["topic_diversity"],
             "top_prioritized_issue": top_a0,
             "top_issue_score": cluster_scores_a0[0]["emerging_score"],
-            "component_status": "All components active with empirical temporal modeling, FDR significance control, and stance verification.",
+            "sentiment_input_mode": "DATASET_LABEL",
+            "components_executed": {
+                "preprocessing": "Active (TextPreprocessor HTML strip + normalize)",
+                "embedding": "Sentence-BERT all-MiniLM-L6-v2 (384d)",
+                "dimensionality_reduction": "TruncatedSVD (10d)",
+                "clustering": "K-Means (k=6) + c-TF-IDF keyword formulation",
+                "temporal": "Prior-only rolling Z-score + CUSUM + Bayesian Beta-Binomial surge",
+                "emerging_score": "Multi-factor logistic normalized score",
+                "aspect_extraction": "Rule/grammar aspect extraction executed on evaluation sample",
+                "candidate_factor_mining": "Fisher Exact Test + NPMI + Benjamini-Hochberg FDR control (alpha=0.05)",
+                "evidence_stance_verification": "Hypothesis-conditioned stance verification with factor verification",
+            },
+            "discovered_candidates_top_issue": [h["candidate_factor"] for h in a0_hyps[:3]],
+            "verified_supporting_evidence_count": a0_verified_supp,
+            "component_status": "All pipeline components executed end-to-end on unified benchmark sample.",
         }
 
         # --- A1: Without Temporal Modeling (Static Volume and Sentiment Only) ---
@@ -188,6 +215,7 @@ class AblationStudyRunner:
         cluster_scores_a1.sort(key=lambda x: x["emerging_score"], reverse=True)
         top_a1 = cluster_scores_a1[0]["name"]
         a1_ranks = {item["cluster_id"]: r for r, item in enumerate(cluster_scores_a1)}
+        rank_changes_a1 = {item["name"]: int(a0_ranks[item["cluster_id"]] - a1_ranks[item["cluster_id"]]) for item in cluster_scores_a1}
         max_rank_shift_a1 = max(abs(a0_ranks[cid] - a1_ranks[cid]) for cid in a0_ranks)
 
         results["configurations"]["A1_without_temporal"] = {
@@ -196,7 +224,9 @@ class AblationStudyRunner:
             "weights_used": scorer_a1.weights,
             "top_prioritized_issue": top_a1,
             "max_rank_displacement": max_rank_shift_a1,
-            "measured_effect": f"Under empirical temporal modeling, top cluster is '{top_a0}'; without temporal features, ranking shifts by up to {max_rank_shift_a1} position(s) favoring static historical volume ('{top_a1}').",
+            "rank_changes_by_cluster": rank_changes_a1,
+            "sample_size": n_docs,
+            "measured_effect": f"Under empirical temporal modeling on N={n_docs} customer texts, top cluster is '{top_a0}'; without temporal features, ranking shifts by up to {max_rank_shift_a1} position(s) favoring static historical volume ('{top_a1}').",
         }
 
         # --- A2: Without Semantic Embeddings (Lexical TF-IDF Baseline) ---
@@ -208,7 +238,7 @@ class AblationStudyRunner:
         db_tfidf = float(davies_bouldin_score(tfidf_mat, labels_tfidf))
         results["configurations"]["A2_without_semantic_embeddings"] = {
             "configuration": "A2_Without_Semantic_Embeddings",
-            "description": "Lexical TF-IDF (1500d) + K-Means Baseline",
+            "description": "Lexical TF-IDF (1500d unigrams) + K-Means Baseline",
             "clustering_silhouette": round(sil_tfidf, 4),
             "davies_bouldin": round(db_tfidf, 4),
             "measured_effect": f"Silhouette dropped from {m_a0['silhouette_score']} to {round(sil_tfidf, 4)}; cluster dispersion increased.",
@@ -238,6 +268,7 @@ class AblationStudyRunner:
         cluster_scores_a3.sort(key=lambda x: x["emerging_score"], reverse=True)
         top_a3 = cluster_scores_a3[0]["name"]
         a3_ranks = {item["cluster_id"]: r for r, item in enumerate(cluster_scores_a3)}
+        rank_changes_a3 = {item["name"]: int(a0_ranks[item["cluster_id"]] - a3_ranks[item["cluster_id"]]) for item in cluster_scores_a3}
         max_rank_shift_a3 = max(abs(a0_ranks[cid] - a3_ranks[cid]) for cid in a0_ranks)
 
         results["configurations"]["A3_without_sentiment"] = {
@@ -246,11 +277,11 @@ class AblationStudyRunner:
             "weights_used": scorer_a3.weights,
             "top_prioritized_issue": top_a3,
             "max_rank_displacement": max_rank_shift_a3,
+            "rank_changes_by_cluster": rank_changes_a3,
             "measured_effect": f"Removing negative sentiment weighting shifts issue rankings by up to {max_rank_shift_a3} position(s); top issue becomes '{top_a3}' as complaints lose priority boost over neutral volume.",
         }
 
         # --- A4: Without Association Significance Filtering ---
-        from ml.aspects.aspect_extractor import AspectExtractor
         aspect_extractor = AspectExtractor()
         aspect_lists = [aspect_extractor.extract_aspects(t) for t in texts]
         miner = CandidateRootCauseMiner(min_support=2, alpha_significance=0.05)
@@ -273,25 +304,28 @@ class AblationStudyRunner:
         )
         n_unfiltered = len(hyps_unfiltered)
         n_filtered = len(hyps_filtered)
-        if n_filtered < n_unfiltered:
-            effect_str = f"Benjamini-Hochberg FDR control (alpha=0.05) pruned {n_unfiltered - n_filtered} non-significant co-occurring candidate factor(s), retaining {n_filtered} statistically validated factors."
-        else:
-            effect_str = f"Evaluated {n_unfiltered} candidate factors; all {n_filtered} top factors satisfied FDR significance criteria (adj-p <= 0.05)."
+        pruned_count = max(0, n_unfiltered - n_filtered)
+        effect_str = f"Benjamini-Hochberg FDR control (alpha=0.05) pruned {pruned_count} non-significant co-occurring candidate factor(s), retaining {n_filtered} statistically validated factors."
 
         results["configurations"]["A4_without_statistical_filtering"] = {
             "configuration": "A4_Without_Statistical_Filtering",
             "description": "Raw Association Co-occurrence vs Benjamini-Hochberg FDR Control",
+            "total_evaluated_hypotheses": n_unfiltered,
+            "statistically_significant_hypotheses": n_filtered,
             "candidates_without_fdr": n_unfiltered,
             "candidates_with_fdr": n_filtered,
+            "fdr_pruned_count": pruned_count,
+            "statistical_procedure": "Benjamini-Hochberg FDR control at alpha=0.05 (controls false discovery rate; does not prove causal intervention)",
             "measured_effect": effect_str,
         }
 
-        # --- A5: Without Evidence Stance Verification ---
+        # --- A5: Without Evidence Stance Verification (Identical Document Population) ---
         ev_retriever = EvidenceRetriever(embedder=embedder, top_k=15)
         query = "flight delay"
         candidate_factor = "delay"
+        sim_threshold = 0.20
 
-        # Correct cosine similarity computed against the actual query vector
+        # Step 1: Real query embedding
         query_vec = embedder.encode(query, use_cache=True)
         if query_vec.ndim == 2:
             query_vec = query_vec[0]
@@ -299,45 +333,66 @@ class AblationStudyRunner:
         if q_norm > 0:
             query_vec = query_vec / q_norm
 
+        # Step 2: Cosine similarities
         emb_norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
         emb_norms = np.where(emb_norms == 0, 1e-9, emb_norms)
         norm_embeddings = embeddings / emb_norms
         sims = np.dot(norm_embeddings, query_vec).flatten()
-        top_15_indices = sims.argsort()[::-1][:15]
 
-        # Naive unverified baseline: classifies top 15 by raw sentiment alone
-        naive_supporting_indices = [int(idx) for idx in top_15_indices if sentiments[int(idx)] == "negative"]
+        # Step 3: Shared top-K documents exceeding similarity threshold
+        sorted_indices = sims.argsort()[::-1]
+        qualifying_indices = [int(i) for i in sorted_indices if sims[int(i)] >= sim_threshold]
+        shared_top_k_indices = qualifying_indices[:15]
+        shared_record_ids = [record_ids[i] for i in shared_top_k_indices]
+
+        # Step 4: Baseline — naive sentiment classification on EXACT shared population
+        naive_supporting_indices = [i for i in shared_top_k_indices if sentiments[i] == "negative"]
+        naive_contradicting_indices = [i for i in shared_top_k_indices if sentiments[i] == "positive"]
+        naive_neutral_indices = [i for i in shared_top_k_indices if sentiments[i] == "neutral"]
         naive_supp_count = len(naive_supporting_indices)
 
-        # Proposed Hypothesis-Conditioned Stance Verification
-        ev_res = ev_retriever.retrieve_evidence(
-            query=query,
-            texts=texts,
-            embeddings=embeddings,
-            sentiments=sentiments,
-            candidate_factor=candidate_factor,
-            similarity_threshold=0.20,
-        )
-        verified_supp = len(ev_res["supporting"])
-        verified_contra = len(ev_res["contradicting"])
-        abstention_count = len(ev_res.get("uncertain", []))
+        # Step 5: Proposed method — stance verification on the EXACT SAME shared population
+        proposed_classifications = {}
+        unverified_factor_indices = []
+        for i in shared_top_k_indices:
+            t = texts[i]
+            s = sentiments[i]
+            has_factor = ev_retriever.verify_factor_reference(t, candidate_factor)
+            if not has_factor:
+                unverified_factor_indices.append(i)
+            stance = ev_retriever._determine_stance(t, candidate_factor, s)
+            proposed_classifications[i] = stance
 
-        # Check how many naive negative items lacked verified factor reference
-        unverified_in_naive = sum(
-            1 for idx in naive_supporting_indices
-            if not ev_retriever.verify_factor_reference(texts[idx], candidate_factor)
+        verified_supp_count = sum(1 for s in proposed_classifications.values() if s == "SUPPORTING")
+        verified_contra_count = sum(1 for s in proposed_classifications.values() if s == "CONTRADICTING")
+        verified_neutral_count = sum(1 for s in proposed_classifications.values() if s == "NEUTRAL")
+        uncertain_count = sum(1 for s in proposed_classifications.values() if s == "UNCERTAIN")
+
+        # Step 6: Count differences & changes
+        classification_changed_count = sum(
+            1 for i in shared_top_k_indices
+            if (("SUPPORTING" if sentiments[i] == "negative" else ("CONTRADICTING" if sentiments[i] == "positive" else "NEUTRAL")) != proposed_classifications[i])
         )
+        unverified_in_naive_supp = sum(1 for i in naive_supporting_indices if i in unverified_factor_indices)
 
         results["configurations"]["A5_without_evidence_verification"] = {
             "configuration": "A5_Without_Evidence_Verification",
-            "description": "Naive Sentiment Retrieval vs Hypothesis-Conditioned Stance Verification",
+            "description": "Naive Sentiment Retrieval vs Hypothesis-Conditioned Stance Verification on Identical Documents",
+            "retrieval_query": query,
+            "candidate_factor": candidate_factor,
+            "shared_document_count": len(shared_top_k_indices),
+            "shared_document_ids": shared_record_ids,
             "naive_supporting_count": naive_supp_count,
-            "verified_supporting_count": verified_supp,
-            "contradicting_count": verified_contra,
-            "neutral_count": len(ev_res["neutral"]),
-            "uncertain_abstention_count": abstention_count,
-            "unverified_items_abstained": unverified_in_naive,
-            "measured_effect": f"Of top 15 retrieved items, naive sentiment classification labeled {naive_supp_count} as supporting; stance verification abstained on {abstention_count} items (including {unverified_in_naive} lacking explicit reference to '{candidate_factor}'), guarding against unverified support.",
+            "naive_contradicting_count": len(naive_contradicting_indices),
+            "naive_neutral_count": len(naive_neutral_indices),
+            "verified_supporting_count": verified_supp_count,
+            "contradicting_count": verified_contra_count,
+            "neutral_count": verified_neutral_count,
+            "uncertain_abstention_count": uncertain_count,
+            "unverified_factor_reference_count": len(unverified_factor_indices),
+            "unverified_items_abstained_from_support": unverified_in_naive_supp,
+            "classification_changes_count": classification_changed_count,
+            "measured_effect": f"Observed classification changes and abstentions: On {len(shared_top_k_indices)} identical retrieved documents, naive sentiment labeled {naive_supp_count} as supporting; hypothesis-conditioned stance verification abstained on {uncertain_count} items ({unverified_in_naive_supp} lacking factor reference to '{candidate_factor}'), changing classification for {classification_changed_count} documents.",
         }
 
         # --- A6: Without Dimensionality Reduction ---

@@ -10,6 +10,7 @@ import os
 import pandas as pd
 from ml.evaluation.benchmark_runner import BenchmarkRunner
 from ml.evaluation.ablation_runner import AblationStudyRunner
+from ml.evaluation.sample_selector import DeterministicSampleSelector
 
 print("=======================================================")
 print("VOICEMINER RESEARCH BENCHMARK & EXPERIMENT EVALUATION")
@@ -22,13 +23,23 @@ if not os.path.exists(sample_csv):
 df = pd.read_csv(sample_csv)
 print(f"Loaded evaluation sample: {len(df)} records.")
 
+# Deterministic Unified Sample Selection (RQ1 - RQ5)
+sample_selector = DeterministicSampleSelector(min_word_count=3)
+eval_sample = sample_selector.select_sample(
+    df=df,
+    sample_size=500,
+    random_seed=42,
+    dataset_name="airline_sample_1000.csv",
+)
+print(f"Unified sample selected: {eval_sample.raw_sample_size} raw input rows -> {eval_sample.post_filtering_sample_size} valid records.")
+
 benchmark_runner = BenchmarkRunner(output_dir="experiments")
 ablation_runner = AblationStudyRunner(output_dir="experiments/ablation")
 
-# 1. Clustering Benchmark
+# 1. Clustering Benchmark (Evaluates unified sample)
 print("\n--- Running Clustering Comparison (RQ1) ---")
 clustering_res = benchmark_runner.run_clustering_comparison(
-    texts=df["text"].dropna().tolist()[:500],
+    sample=eval_sample,
     n_clusters=6,
     random_state=42,
 )
@@ -48,10 +59,10 @@ print(f"  Accuracy: {sentiment_res['accuracy'] * 100:.2f}%")
 print(f"  Macro-F1: {sentiment_res['macro_f1']:.4f}")
 print(f"  Confusion Matrix: {sentiment_res['confusion_matrix']}")
 
-# 3. Empirical Component Ablations (RQ4 & RQ5)
+# 3. Empirical Component Ablations (RQ4 & RQ5 on IDENTICAL unified sample)
 print("\n--- Running Empirical Component Ablations (A0-A6) ---")
 empirical_ablation_res = ablation_runner.run_empirical_component_ablations(
-    df=df,
+    sample=eval_sample,
     n_clusters=6,
     random_seed=42,
 )

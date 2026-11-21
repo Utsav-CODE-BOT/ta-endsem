@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import threading
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 import numpy as np
@@ -30,6 +31,21 @@ from ml.evidence.evidence_retriever import EvidenceRetriever
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class AnalysisSnapshot:
+    """Immutable, consistent read snapshot of pipeline execution results."""
+    df: Optional[pd.DataFrame] = None
+    embeddings: Optional[np.ndarray] = None
+    clusters: List[Dict[str, Any]] = field(default_factory=list)
+    hypotheses: List[Dict[str, Any]] = field(default_factory=list)
+    emerging: List[Dict[str, Any]] = field(default_factory=list)
+    graph: Dict[str, Any] = field(default_factory=lambda: {"nodes": [], "links": []})
+    temporal_available: bool = True
+    similarity_threshold: float = 0.35
+    is_ready: bool = False
+    generated_at: str = ""
+
+
 class PipelineService:
     """
     Core pipeline orchestrator coordinating ingestion, NLP modeling,
@@ -52,17 +68,55 @@ class PipelineService:
         self.graph_builder = RelationshipGraphBuilder()
         self.evidence_retriever = EvidenceRetriever(embedder=self.embedder)
 
-        # In-memory execution state for fast low-latency retrieval
-        self.current_df: Optional[pd.DataFrame] = None
-        self.current_embeddings: Optional[np.ndarray] = None
-        self.current_clusters: List[Dict[str, Any]] = []
-        self.current_hypotheses: List[Dict[str, Any]] = []
-        self.current_emerging: List[Dict[str, Any]] = []
-        self.current_graph: Dict[str, Any] = {"nodes": [], "links": []}
-        self.temporal_available: bool = True
+        # In-memory execution state protected by reentrant lock and atomic snapshot
         self.similarity_threshold: float = 0.35
-        self.is_ready = False
         self._lock = threading.RLock()
+        self._snapshot: AnalysisSnapshot = AnalysisSnapshot()
+
+    @property
+    def current_df(self) -> Optional[pd.DataFrame]:
+        with self._lock:
+            return self._snapshot.df
+
+    @property
+    def current_embeddings(self) -> Optional[np.ndarray]:
+        with self._lock:
+            return self._snapshot.embeddings
+
+    @property
+    def current_clusters(self) -> List[Dict[str, Any]]:
+        with self._lock:
+            return self._snapshot.clusters
+
+    @property
+    def current_hypotheses(self) -> List[Dict[str, Any]]:
+        with self._lock:
+            return self._snapshot.hypotheses
+
+    @property
+    def current_emerging(self) -> List[Dict[str, Any]]:
+        with self._lock:
+            return self._snapshot.emerging
+
+    @property
+    def current_graph(self) -> Dict[str, Any]:
+        with self._lock:
+            return self._snapshot.graph
+
+    @property
+    def temporal_available(self) -> bool:
+        with self._lock:
+            return self._snapshot.temporal_available
+
+    @property
+    def is_ready(self) -> bool:
+        with self._lock:
+            return self._snapshot.is_ready
+
+    def get_snapshot(self) -> AnalysisSnapshot:
+        """Returns the current consistent analysis snapshot."""
+        with self._lock:
+            return self._snapshot
 
     @classmethod
     def get_instance(cls) -> "PipelineService":
@@ -215,7 +269,6 @@ class PipelineService:
             "sample_columns": list(df.columns),
         }
 
-        self.temporal_available = temporal_available
         return processed_df, stats
 
     def run_full_pipeline(
@@ -326,8 +379,9 @@ class PipelineService:
 
         # 5. Temporal Trend Analysis & 6. Emerging Issue Scoring
         logger.info("Calculating temporal dynamics & emerging issue prioritization...")
-        has_valid_times = any(pd.notna(t) for t in timestamps)
-        if has_valid_times:
+        valid_ts_count = sum(1 for t in timestamps if pd.notna(t))
+        local_temporal_available = (valid_ts_count / max(1, len(local_df)) >= 0.50) and (valid_ts_count >= 5)
+        if local_temporal_available:
             time_series_df = self.temporal_analyzer.build_time_series(
                 timestamps=timestamps,
                 cluster_labels=cluster_labels,
@@ -346,7 +400,7 @@ class PipelineService:
                 trend = {
                     "cluster_id": c_id,
                     "history": [],
-                    "recent_volume": cl["size"],
+                    "recent_volume": 0,
                     "baseline_volume": 0,
                     "growth_rate": 0.0,
                     "z_score_anomalies": 0,
@@ -384,7 +438,10 @@ class PipelineService:
             emerging_score_data["trend_history"] = trend.get("history", [])
             emerging_score_data["cusum_change_detected"] = trend.get("cusum_change_detected", False)
             emerging_score_data["cusum_change_date"] = trend.get("cusum_change_date")
-            emerging_score_data["data_sufficiency"] = trend.get("data_sufficiency", "SUFFICIENT")
+            emerging_score_data["data_sufficiency"] = trend.get("data_sufficiency", "TEMPORAL_UNAVAILABLE" if not local_temporal_available else "SUFFICIENT")
+            if not local_temporal_available:
+                emerging_score_data["confidence_level"] = "NO_TEMPORAL_DATA"
+                emerging_score_data["temporal_available"] = False
             cl["cusum_change_date"] = trend.get("cusum_change_date")
             emerging_issues.append(emerging_score_data)
 
@@ -475,18 +532,24 @@ class PipelineService:
             db_saved, db_error = self._save_to_database(db, local_df, cluster_profiles, emerging_issues, all_hypotheses)
 
         # 10. Atomic snapshot publication under lock
+        new_snapshot = AnalysisSnapshot(
+            df=local_df,
+            embeddings=local_embeddings,
+            clusters=cluster_profiles,
+            hypotheses=all_hypotheses,
+            emerging=emerging_issues,
+            graph=local_graph,
+            temporal_available=local_temporal_available,
+            similarity_threshold=float(similarity_threshold),
+            is_ready=True,
+            generated_at=datetime.now(timezone.utc).isoformat(),
+        )
         with self._lock:
+            self._snapshot = new_snapshot
             self.similarity_threshold = float(similarity_threshold)
             self.clusterer = local_clusterer
             self.evidence_retriever = local_evidence_retriever
             self.candidate_miner = local_candidate_miner
-            self.current_df = local_df
-            self.current_embeddings = local_embeddings
-            self.current_clusters = cluster_profiles
-            self.current_emerging = emerging_issues
-            self.current_hypotheses = all_hypotheses
-            self.current_graph = local_graph
-            self.is_ready = True
 
         logger.info("VoiceMiner pipeline execution successfully completed.")
 
@@ -497,7 +560,7 @@ class PipelineService:
             "clusters_count": len(cluster_profiles),
             "emerging_issues_count": len(emerging_issues),
             "hypotheses_count": len(all_hypotheses),
-            "temporal_available": self.temporal_available,
+            "temporal_available": local_temporal_available,
             "database_saved": db_saved,
         }
         if not db_saved:
@@ -635,7 +698,8 @@ class PipelineService:
 
         eff_threshold = float(similarity_threshold) if similarity_threshold is not None else self.similarity_threshold
 
-        if self.is_ready and self.current_clusters and self.current_embeddings is not None:
+        snap = self.get_snapshot()
+        if snap.is_ready and snap.clusters and snap.embeddings is not None and snap.df is not None:
             # Use open-set cluster prediction with centroid distance and propagated threshold
             pred_match = self.clusterer.predict_cluster(single_emb, similarity_threshold=eff_threshold)
             matched_issue = {
@@ -649,7 +713,7 @@ class PipelineService:
             matched_id = pred_match["cluster_id"]
             if matched_id >= 0:
                 # Find associated candidate causes for this issue
-                for h in self.current_hypotheses:
+                for h in snap.hypotheses:
                     if h["cluster_id"] == matched_id:
                         candidate_cause = {
                             "candidate_factor": h["candidate_factor"],
@@ -664,15 +728,15 @@ class PipelineService:
             query_factor = candidate_cause["candidate_factor"] if candidate_cause else None
             ev = self.evidence_retriever.retrieve_evidence(
                 query=clean_text,
-                texts=self.current_df["clean_text"].tolist(),
-                embeddings=self.current_embeddings,
-                sentiments=self.current_df["sentiment"].tolist(),
+                texts=snap.df["clean_text"].tolist(),
+                embeddings=snap.embeddings,
+                sentiments=snap.df["sentiment"].tolist(),
                 candidate_factor=query_factor,
                 dates=[
                     t.strftime("%Y-%m-%d") if (pd.notna(t) and hasattr(t, "strftime")) else "N/A"
-                    for t in self.current_df["timestamp"]
+                    for t in snap.df["timestamp"]
                 ],
-                sources=self.current_df["source"].tolist(),
+                sources=snap.df["source"].tolist(),
             )
             evidence_list = ev["supporting"][:3]
 
@@ -687,138 +751,138 @@ class PipelineService:
             "similar_evidence": evidence_list,
         }
 
-    def get_dashboard_summary(self) -> Dict[str, Any]:
+    def get_dashboard_summary(self, snapshot: Optional[AnalysisSnapshot] = None) -> Dict[str, Any]:
         """Returns high-level statistics for the Overview Dashboard under snapshot lock."""
-        with self._lock:
-            if not self.is_ready or self.current_df is None:
-                return {
-                    "total_feedback": 0,
-                    "sentiment_distribution": {"negative": 0.0, "neutral": 0.0, "positive": 0.0},
-                    "primary_emotions": {},
-                    "active_issues": 0,
-                    "emerging_issues_count": 0,
-                    "critical_issues_count": 0,
-                    "high_priority_count": 0,
-                    "top_aspects": [],
-                    "sources": [],
-                    "temporal_available": self.temporal_available,
-                    "date_range": {"start": "N/A", "end": "N/A"},
-                }
-
-            df = self.current_df
-            total = len(df)
-            sent_counts = df["sentiment"].value_counts(normalize=True).to_dict()
-            sent_dist = {
-                "negative": round(sent_counts.get("negative", 0.0) * 100, 1),
-                "neutral": round(sent_counts.get("neutral", 0.0) * 100, 1),
-                "positive": round(sent_counts.get("positive", 0.0) * 100, 1),
-            }
-
-            emotion_counts = df["emotion"].value_counts().to_dict()
-
-            # Aspects count
-            aspect_counts = {}
-            for asps in df["aspects"]:
-                for item in asps:
-                    a = item["aspect"]
-                    aspect_counts[a] = aspect_counts.get(a, 0) + 1
-            top_aspects = [
-                {"aspect": k, "count": v, "percentage": round(v / total * 100, 1)}
-                for k, v in sorted(aspect_counts.items(), key=lambda x: x[1], reverse=True)[:6]
-            ]
-
-            # Sources
-            source_counts = df["source"].value_counts().to_dict()
-            sources_list = [
-                {"source": k, "count": v, "percentage": round(v / total * 100, 1)}
-                for k, v in sorted(source_counts.items(), key=lambda x: x[1], reverse=True)[:6]
-            ]
-
-            critical_count = sum(1 for e in self.current_emerging if e["priority"] == "CRITICAL")
-            high_count = sum(1 for e in self.current_emerging if e["priority"] == "HIGH")
-
-            valid_times = [t for t in df["timestamp"] if pd.notna(t) and hasattr(t, "strftime")]
-            min_date = min(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
-            max_date = max(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
-
+        snap = snapshot or self.get_snapshot()
+        if not snap.is_ready or snap.df is None:
             return {
-                "total_feedback": total,
-                "sentiment_distribution": sent_dist,
-                "primary_emotions": emotion_counts,
-                "active_issues": len(self.current_clusters),
-                "emerging_issues_count": len(self.current_emerging),
-                "critical_issues_count": critical_count,
-                "high_priority_count": high_count,
-                "top_aspects": top_aspects,
-                "sources": sources_list,
-                "temporal_available": self.temporal_available,
-                "date_range": {"start": min_date, "end": max_date},
+                "total_feedback": 0,
+                "sentiment_distribution": {"negative": 0.0, "neutral": 0.0, "positive": 0.0},
+                "primary_emotions": {},
+                "active_issues": 0,
+                "emerging_issues_count": 0,
+                "critical_issues_count": 0,
+                "high_priority_count": 0,
+                "top_aspects": [],
+                "sources": [],
+                "temporal_available": snap.temporal_available,
+                "date_range": {"start": "N/A", "end": "N/A"},
             }
+
+        df = snap.df
+        total = len(df)
+        sent_counts = df["sentiment"].value_counts(normalize=True).to_dict()
+        sent_dist = {
+            "negative": round(sent_counts.get("negative", 0.0) * 100, 1),
+            "neutral": round(sent_counts.get("neutral", 0.0) * 100, 1),
+            "positive": round(sent_counts.get("positive", 0.0) * 100, 1),
+        }
+
+        emotion_counts = df["emotion"].value_counts().to_dict()
+
+        # Aspects count
+        aspect_counts = {}
+        for asps in df["aspects"]:
+            for item in asps:
+                a = item["aspect"]
+                aspect_counts[a] = aspect_counts.get(a, 0) + 1
+        top_aspects = [
+            {"aspect": k, "count": v, "percentage": round(v / total * 100, 1)}
+            for k, v in sorted(aspect_counts.items(), key=lambda x: x[1], reverse=True)[:6]
+        ]
+
+        # Sources
+        source_counts = df["source"].value_counts().to_dict()
+        sources_list = [
+            {"source": k, "count": v, "percentage": round(v / total * 100, 1)}
+            for k, v in sorted(source_counts.items(), key=lambda x: x[1], reverse=True)[:6]
+        ]
+
+        critical_count = sum(1 for e in snap.emerging if e["priority"] == "CRITICAL")
+        high_count = sum(1 for e in snap.emerging if e["priority"] == "HIGH")
+
+        valid_times = [t for t in df["timestamp"] if pd.notna(t) and hasattr(t, "strftime")]
+        min_date = min(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
+        max_date = max(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
+
+        return {
+            "total_feedback": total,
+            "sentiment_distribution": sent_dist,
+            "primary_emotions": emotion_counts,
+            "active_issues": len(snap.clusters),
+            "emerging_issues_count": len(snap.emerging),
+            "critical_issues_count": critical_count,
+            "high_priority_count": high_count,
+            "top_aspects": top_aspects,
+            "sources": sources_list,
+            "temporal_available": snap.temporal_available,
+            "date_range": {"start": min_date, "end": max_date},
+        }
 
     def generate_report(self, include_raw_evidence: bool = True) -> Dict[str, Any]:
         """
         Compiles an evidence-grounded executive and root-cause report under snapshot lock.
         """
-        with self._lock:
-            dashboard = self.get_dashboard_summary()
+        snap = self.get_snapshot()
+        dashboard = self.get_dashboard_summary(snapshot=snap)
 
-            emerging_summary = []
-            for e in self.current_emerging[:4]:
-                emerging_summary.append({
-                    "issue_name": e.get("name", e.get("issue_name", "Unknown Issue")),
-                    "emerging_score": e["emerging_score"],
-                    "priority": e["priority"],
-                    "growth_rate_pct": e["growth_rate_pct"],
-                    "volume": e["total_volume"],
-                    "negative_sentiment_ratio": e["negative_sentiment_ratio"],
-                    "confidence_level": e.get("confidence_level", "MODERATE_STATISTICAL_SUPPORT"),
-                })
+        emerging_summary = []
+        for e in snap.emerging[:4]:
+            emerging_summary.append({
+                "issue_name": e.get("name", e.get("issue_name", "Unknown Issue")),
+                "emerging_score": e["emerging_score"],
+                "priority": e["priority"],
+                "growth_rate_pct": e["growth_rate_pct"],
+                "volume": e["total_volume"],
+                "negative_sentiment_ratio": e["negative_sentiment_ratio"],
+                "confidence_level": e.get("confidence_level", "MODERATE_STATISTICAL_SUPPORT"),
+            })
 
-            hypotheses_summary = []
-            for h in self.current_hypotheses[:5]:
-                hypotheses_summary.append({
-                    "associated_issue": h["associated_issue"],
-                    "candidate_factor": h["candidate_factor"],
-                    "confidence": h["confidence"],
-                    "lift": h["lift"],
-                    "npmi": h.get("npmi", 0.0),
-                    "is_statistically_significant": h.get("is_statistically_significant", False),
-                    "temporal_relationship": h["temporal_relationship"],
-                    "interpretation": h["interpretation"],
-                })
+        hypotheses_summary = []
+        for h in snap.hypotheses[:5]:
+            hypotheses_summary.append({
+                "associated_issue": h["associated_issue"],
+                "candidate_factor": h["candidate_factor"],
+                "confidence": h["confidence"],
+                "lift": h["lift"],
+                "npmi": h.get("npmi", 0.0),
+                "is_statistically_significant": h.get("is_statistically_significant", False),
+                "temporal_relationship": h["temporal_relationship"],
+                "interpretation": h["interpretation"],
+            })
 
-            avg_coherence = (
-                round(float(np.mean([cl.get("cluster_coherence", 0.70) for cl in self.current_clusters])), 3)
-                if self.current_clusters else 0.70
-            )
+        avg_coherence = (
+            round(float(np.mean([cl.get("cluster_coherence", 0.70) for cl in snap.clusters])), 3)
+            if snap.clusters else 0.70
+        )
 
-            return {
-                "title": "VoiceMiner Executive Intelligence & Root-Cause Audit",
-                "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-                "executive_summary": (
-                    f"Analysis of {dashboard['total_feedback']:,} multi-source customer records detected "
-                    f"{dashboard['active_issues']} distinct semantic issue clusters. "
-                    f"We identified {dashboard['critical_issues_count']} CRITICAL and {dashboard['high_priority_count']} HIGH "
-                    f"priority emerging issues exhibiting anomalous temporal acceleration and negative sentiment density. "
-                    f"Candidate factor mining discovered statistical associations linking operational disruptions with key entity patterns."
-                ),
-                "emerging_issues_summary": emerging_summary,
-                "candidate_root_causes": hypotheses_summary,
-                "evidence_audit": {
-                    "total_documents_analyzed": dashboard["total_feedback"],
-                    "negative_sentiment_pct": dashboard["sentiment_distribution"]["negative"],
-                    "cluster_coherence_avg": avg_coherence,
-                },
-                "limitations": [
-                    "Discovered factors represent empirical statistical associations and temporal precedence; they do not prove direct causation without randomized intervention or counterfactual modeling.",
-                    "Short text expressions and sarcasm may introduce variance in sentence-level emotion calibration.",
-                    "Findings are bounded by the temporal and domain window of the ingested dataset.",
-                    "Uncertain or sparse temporal data is flagged and excluded from causal or change-point claims.",
-                    "Contradictory evidence retrieval relies on polarity and semantic distance to identify operational functioning cues; generic positive sentiment unrelated to the specific hypothesis factor may abstain to UNCERTAIN rather than registering as verified contradictory evidence.",
-                ],
-                "recommended_investigation_areas": [
-                    "Conduct operational cross-checks on flight dispatch gates and baggage transit checkpoints corresponding to the peak surge dates.",
-                    "Review digital app release logs and payment webhook error rates during the detected acceleration window.",
-                    "Engage front-line support staff to cross-examine customer ticket resolution procedures for recurring bottlenecks.",
-                ],
-            }
+        return {
+            "title": "VoiceMiner Executive Intelligence & Root-Cause Audit",
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "executive_summary": (
+                f"Analysis of {dashboard['total_feedback']:,} multi-source customer records detected "
+                f"{dashboard['active_issues']} distinct semantic issue clusters. "
+                f"We identified {dashboard['critical_issues_count']} CRITICAL and {dashboard['high_priority_count']} HIGH "
+                f"priority emerging issues exhibiting anomalous temporal acceleration and negative sentiment density. "
+                f"Candidate factor mining discovered statistical associations linking operational disruptions with key entity patterns."
+            ),
+            "emerging_issues_summary": emerging_summary,
+            "candidate_root_causes": hypotheses_summary,
+            "evidence_audit": {
+                "total_documents_analyzed": dashboard["total_feedback"],
+                "negative_sentiment_pct": dashboard["sentiment_distribution"]["negative"],
+                "cluster_coherence_avg": avg_coherence,
+            },
+            "limitations": [
+                "Discovered factors represent empirical statistical associations and temporal precedence; they do not prove direct causation without randomized intervention or counterfactual modeling.",
+                "Short text expressions and sarcasm may introduce variance in sentence-level emotion calibration.",
+                "Findings are bounded by the temporal and domain window of the ingested dataset.",
+                "Uncertain or sparse temporal data is flagged and excluded from causal or change-point claims.",
+                "Contradictory evidence retrieval relies on polarity and semantic distance to identify operational functioning cues; generic positive sentiment unrelated to the specific hypothesis factor may abstain to UNCERTAIN rather than registering as verified contradictory evidence.",
+            ],
+            "recommended_investigation_areas": [
+                "Conduct operational cross-checks on flight dispatch gates and baggage transit checkpoints corresponding to the peak surge dates.",
+                "Review digital app release logs and payment webhook error rates during the detected acceleration window.",
+                "Engage front-line support staff to cross-examine customer ticket resolution procedures for recurring bottlenecks.",
+            ],
+        }

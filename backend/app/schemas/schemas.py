@@ -12,6 +12,8 @@ class IngestionStats(BaseModel):
     languages_detected: List[str]
     sample_columns: List[str]
     temporal_available: Optional[bool] = True
+    status: Optional[str] = "success"
+    warning: Optional[str] = None
 
 
 class AnalyzeRequest(BaseModel):

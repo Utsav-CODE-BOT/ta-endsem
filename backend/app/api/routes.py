@@ -74,7 +74,12 @@ async def upload_dataset(
     try:
         processed_df, stats = service.ingest_file(temp_path)
         # Trigger pipeline analysis on uploaded dataset
-        service.run_full_pipeline(processed_df, db=db)
+        pipeline_res = service.run_full_pipeline(processed_df, db=db)
+        if pipeline_res.get("status") == "partial_success":
+            stats["status"] = "partial_success"
+            stats["warning"] = f"Analysis completed in-memory with warning: {pipeline_res.get('database_error', 'Database write issue')}"
+        else:
+            stats["status"] = "success"
         return IngestionStats(**stats)
     except Exception as e:
         logger.error("Dataset upload/processing error: %s", e)
@@ -131,7 +136,8 @@ def get_dashboard():
     Returns executive overview metrics, sentiment, emotion distribution, and priority counts.
     """
     service = PipelineService.get_instance()
-    return DashboardSummary(**service.get_dashboard_summary())
+    snap = service.get_snapshot()
+    return DashboardSummary(**service.get_dashboard_summary(snapshot=snap))
 
 
 @router.get("/issues", response_model=List[IssueClusterItem])
@@ -140,8 +146,9 @@ def list_issues():
     Lists all discovered semantic issue clusters with 2D scatter coordinates and top terms.
     """
     service = PipelineService.get_instance()
+    snap = service.get_snapshot()
     items = []
-    for cl in service.current_clusters:
+    for cl in snap.clusters:
         items.append(IssueClusterItem(
             issue_id=cl["cluster_id"],
             name=cl["name"],
@@ -163,10 +170,11 @@ def get_issue_detail(issue_id: int):
     Returns detailed profile and exemplar feedback statements for an issue cluster.
     """
     service = PipelineService.get_instance()
-    for cl in service.current_clusters:
+    snap = service.get_snapshot()
+    for cl in snap.clusters:
         if cl["cluster_id"] == issue_id:
             matched_metrics = None
-            for em in service.current_emerging:
+            for em in snap.emerging:
                 if em["cluster_id"] == issue_id:
                     matched_metrics = em
                     break
@@ -194,7 +202,8 @@ def list_emerging_issues():
     Returns prioritized list of emerging issues ranked by EmergingScore.
     """
     service = PipelineService.get_instance()
-    return [EmergingIssueItem(**item) for item in service.current_emerging]
+    snap = service.get_snapshot()
+    return [EmergingIssueItem(**item) for item in snap.emerging]
 
 
 @router.get("/issues/{issue_id}/root-causes", response_model=List[RootCauseHypothesisItem])
@@ -203,9 +212,10 @@ def get_issue_root_causes(issue_id: int):
     Returns candidate root causes, Lift, PMI, NPMI, and association strength for a given issue.
     """
     service = PipelineService.get_instance()
+    snap = service.get_snapshot()
     results = []
     idx = 1
-    for h in service.current_hypotheses:
+    for h in snap.hypotheses:
         if h["cluster_id"] == issue_id:
             results.append(RootCauseHypothesisItem(
                 id=idx,
@@ -239,18 +249,19 @@ def get_issue_evidence(
     Retrieves supporting, contradictory, neutral, and uncertain evidence for an issue hypothesis.
     """
     service = PipelineService.get_instance()
-    if not service.is_ready or service.current_df is None:
+    snap = service.get_snapshot()
+    if not snap.is_ready or snap.df is None or snap.embeddings is None:
         raise HTTPException(status_code=400, detail="Pipeline data not initialized.")
 
     issue_name = f"Issue Cluster {issue_id}"
-    for cl in service.current_clusters:
+    for cl in snap.clusters:
         if cl["cluster_id"] == issue_id:
             issue_name = cl["name"]
             break
 
     target_factor = candidate_factor
     if not target_factor:
-        for h in service.current_hypotheses:
+        for h in snap.hypotheses:
             if h["cluster_id"] == issue_id:
                 target_factor = h["candidate_factor"]
                 break
@@ -259,17 +270,17 @@ def get_issue_evidence(
 
     dates_list = [
         t.strftime("%Y-%m-%d") if (pd.notna(t) and hasattr(t, "strftime")) else "N/A"
-        for t in service.current_df["timestamp"]
+        for t in snap.df["timestamp"]
     ]
 
     evidence = service.evidence_retriever.retrieve_evidence(
         query=search_query,
-        texts=service.current_df["clean_text"].tolist(),
-        embeddings=service.current_embeddings,
-        sentiments=service.current_df["sentiment"].tolist(),
+        texts=snap.df["clean_text"].tolist(),
+        embeddings=snap.embeddings,
+        sentiments=snap.df["sentiment"].tolist(),
         candidate_factor=target_factor,
         dates=dates_list,
-        sources=service.current_df["source"].tolist(),
+        sources=snap.df["source"].tolist(),
     )
 
     return EvidenceResponse(**evidence)
@@ -281,7 +292,8 @@ def get_relationship_graph():
     Returns the NetworkX multi-relational graph linking issues, aspects, and candidate factors.
     """
     service = PipelineService.get_instance()
-    return service.current_graph
+    snap = service.get_snapshot()
+    return snap.graph
 
 
 @router.post("/text/analyze", response_model=TextAnalyzeResponse)
