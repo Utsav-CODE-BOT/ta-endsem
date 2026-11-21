@@ -36,7 +36,7 @@ class SentimentAnalyzer:
         Returns: {"label": "negative"|"neutral"|"positive"|"unknown", "score": float, "status": str}
         """
         if not text or not text.strip():
-            return {"label": "neutral", "score": 0.50, "status": "EMPTY_INPUT"}
+            return {"label": "unknown", "score": 0.0, "status": "EMPTY_INPUT"}
 
         try:
             res = self.pipe(text[:512])[0]
@@ -61,7 +61,7 @@ class SentimentAnalyzer:
             valid_texts = [chunk[idx][:512] for idx in valid_indices]
 
             chunk_results = [
-                {"label": "neutral", "score": 0.50, "status": "EMPTY_INPUT"} for _ in chunk
+                {"label": "unknown", "score": 0.0, "status": "EMPTY_INPUT"} for _ in chunk
             ]
 
             if valid_texts:

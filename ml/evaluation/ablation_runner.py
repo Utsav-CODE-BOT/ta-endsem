@@ -48,8 +48,38 @@ class AblationStudyRunner:
         preprocessor = TextPreprocessor()
         embedder = SentenceEmbedder()
 
-        texts = [preprocessor.clean(t) for t in df["text"].dropna().tolist()[:500]]
-        texts = [t for t in texts if len(t.split()) >= 3]
+        # Extract aligned texts, timestamps, and sentiments from real benchmark dataframe
+        text_col = "text" if "text" in df.columns else "clean_text"
+        time_col = None
+        for c in ["tweet_created", "timestamp", "date", "created_at"]:
+            if c in df.columns:
+                time_col = c
+                break
+        sent_col = None
+        for c in ["airline_sentiment", "sentiment"]:
+            if c in df.columns:
+                sent_col = c
+                break
+
+        clean_rows = []
+        for idx, row in df.iterrows():
+            raw_t = row.get(text_col)
+            if pd.isna(raw_t):
+                continue
+            cleaned = preprocessor.clean(str(raw_t))
+            if len(cleaned.split()) >= 3:
+                clean_rows.append({
+                    "text": cleaned,
+                    "timestamp": row.get(time_col) if time_col else None,
+                    "sentiment": row.get(sent_col) if sent_col else "neutral",
+                })
+            if len(clean_rows) >= 500:
+                break
+
+        texts = [r["text"] for r in clean_rows]
+        raw_timestamps = [r["timestamp"] for r in clean_rows]
+        timestamps = [pd.to_datetime(t, utc=True) if pd.notna(t) else None for t in raw_timestamps]
+        sentiments = [str(r["sentiment"]).lower() if pd.notna(r["sentiment"]) else "neutral" for r in clean_rows]
         n_docs = len(texts)
 
         # Precompute dense embeddings
@@ -65,43 +95,108 @@ class AblationStudyRunner:
             "configurations": {},
         }
 
-        # --- A0: Full System ---
+        # --- A0: Full System (End-to-End Execution with Real Temporal & Sentiment Dynamics) ---
+        from ml.temporal.temporal_analyzer import TemporalAnalyzer
         clusterer_a0 = IssueClusterer(n_clusters=n_clusters, reduction_dims=10, random_state=random_seed)
         res_a0 = clusterer_a0.fit_predict(embeddings, texts, algorithm="kmeans")
         m_a0 = res_a0["metrics"]
+        cluster_labels = res_a0["labels"]
+        cluster_profiles = res_a0["cluster_profiles"]
+
+        # Build real empirical time series from aligned timestamps
+        temporal_analyzer = TemporalAnalyzer()
+        time_series_df = temporal_analyzer.build_time_series(
+            timestamps=timestamps,
+            cluster_labels=cluster_labels,
+            sentiments=sentiments,
+            freq="D",
+        )
+
+        scorer_a0 = EmergingScorer()
+        cluster_scores_a0 = []
+        for cl in cluster_profiles:
+            c_id = cl["cluster_id"]
+            trend = temporal_analyzer.analyze_cluster_trend(time_series_df, c_id) if not time_series_df.empty else {
+                "growth_rate": 0.0, "recent_volume": cl["size"], "baseline_volume": 0, "surge_probability": None
+            }
+            c_indices = [i for i, lbl in enumerate(cluster_labels) if lbl == c_id]
+            c_sents = [sentiments[i] for i in c_indices]
+            neg_ratio = float((np.array(c_sents) == "negative").mean()) if c_sents else 0.50
+            coherence = cl.get("cluster_coherence", 0.70)
+
+            s0 = scorer_a0.score_issue(
+                cluster_id=c_id,
+                cluster_name=cl["name"],
+                total_volume=cl["size"],
+                dataset_total_volume=n_docs,
+                growth_rate=trend["growth_rate"],
+                recent_volume=trend["recent_volume"],
+                negative_sentiment_ratio=neg_ratio,
+                cluster_coherence=coherence,
+                coherence_reliable=cl.get("coherence_reliable", True),
+                surge_probability=trend.get("surge_probability"),
+            )
+            cluster_scores_a0.append({
+                "cluster_id": c_id,
+                "name": cl["name"],
+                "total_volume": cl["size"],
+                "emerging_score": s0["emerging_score"],
+                "priority": s0["priority"],
+                "growth_rate": trend["growth_rate"],
+                "recent_volume": trend["recent_volume"],
+                "negative_sentiment_ratio": neg_ratio,
+                "coherence": coherence,
+                "surge_probability": trend.get("surge_probability"),
+            })
+
+        cluster_scores_a0.sort(key=lambda x: x["emerging_score"], reverse=True)
+        top_a0 = cluster_scores_a0[0]["name"]
+        a0_ranks = {item["cluster_id"]: r for r, item in enumerate(cluster_scores_a0)}
+
         results["configurations"]["A0_full_system"] = {
             "configuration": "A0_Full_System",
-            "description": "Full VoiceMiner (SBERT + SVD-10d + K-Means + c-TF-IDF + Prior-Only Temporal + FDR + Stance)",
+            "description": "Full VoiceMiner Pipeline (SBERT + SVD-10d + K-Means + c-TF-IDF + Prior-Only Temporal + FDR + Stance)",
             "clustering_silhouette": m_a0["silhouette_score"],
             "davies_bouldin": m_a0["davies_bouldin_index"],
             "topic_diversity": m_a0["topic_diversity"],
-            "component_status": "All components active with FDR significance control and stance verification.",
+            "top_prioritized_issue": top_a0,
+            "top_issue_score": cluster_scores_a0[0]["emerging_score"],
+            "component_status": "All components active with empirical temporal modeling, FDR significance control, and stance verification.",
         }
 
-        # --- A1: Without Temporal Modeling ---
-        # Volume-only ranking without temporal growth or recentness weights
-        scorer_a0 = EmergingScorer()
+        # --- A1: Without Temporal Modeling (Static Volume and Sentiment Only) ---
         scorer_a1 = EmergingScorer(weights={"growth": 0.0, "volume": 0.60, "recentness": 0.0, "negative_sentiment": 0.25, "cluster_coherence": 0.15})
-        scores_a0 = []
-        scores_a1 = []
-        for i, cl in enumerate(res_a0["cluster_profiles"]):
-            sim_growth = 250.0 if i == (len(res_a0["cluster_profiles"]) - 1) else (10.0 + i * 5.0)
-            sim_recent = int(cl["size"] * 0.6) if i == (len(res_a0["cluster_profiles"]) - 1) else int(cl["size"] * 0.2)
-            s0 = scorer_a0.score_issue(cl["cluster_id"], cl["name"], cl["size"], n_docs, sim_growth, sim_recent, 0.75, cl.get("cluster_coherence", 0.70))
-            s1 = scorer_a1.score_issue(cl["cluster_id"], cl["name"], cl["size"], n_docs, 0.0, 0, 0.75, cl.get("cluster_coherence", 0.70))
-            scores_a0.append((cl["name"], s0["emerging_score"]))
-            scores_a1.append((cl["name"], s1["emerging_score"]))
+        cluster_scores_a1 = []
+        for item in cluster_scores_a0:
+            c_id = item["cluster_id"]
+            s1 = scorer_a1.score_issue(
+                cluster_id=c_id,
+                cluster_name=item["name"],
+                total_volume=item["total_volume"],
+                dataset_total_volume=n_docs,
+                growth_rate=0.0,
+                recent_volume=0,
+                negative_sentiment_ratio=item["negative_sentiment_ratio"],
+                cluster_coherence=item["coherence"],
+            )
+            cluster_scores_a1.append({
+                "cluster_id": c_id,
+                "name": item["name"],
+                "emerging_score": s1["emerging_score"],
+            })
 
-        scores_a0.sort(key=lambda x: x[1], reverse=True)
-        scores_a1.sort(key=lambda x: x[1], reverse=True)
-        top_a0 = scores_a0[0][0]
-        top_a1 = scores_a1[0][0]
+        cluster_scores_a1.sort(key=lambda x: x["emerging_score"], reverse=True)
+        top_a1 = cluster_scores_a1[0]["name"]
+        a1_ranks = {item["cluster_id"]: r for r, item in enumerate(cluster_scores_a1)}
+        max_rank_shift_a1 = max(abs(a0_ranks[cid] - a1_ranks[cid]) for cid in a0_ranks)
 
         results["configurations"]["A1_without_temporal"] = {
             "configuration": "A1_Without_Temporal_Modeling",
-            "description": "Static Volume and Sentiment Only (No growth rate or recentness window)",
+            "description": "Static Volume and Sentiment Only (Empirical ranking without growth rate or recentness window)",
             "weights_used": scorer_a1.weights,
-            "measured_effect": f"Under temporal modeling, high-growth cluster ranks #1 ('{top_a0}'); without temporal tracking, static volume dominates ('{top_a1}') delaying detection.",
+            "top_prioritized_issue": top_a1,
+            "max_rank_displacement": max_rank_shift_a1,
+            "measured_effect": f"Under empirical temporal modeling, top cluster is '{top_a0}'; without temporal features, ranking shifts by up to {max_rank_shift_a1} position(s) favoring static historical volume ('{top_a1}').",
         }
 
         # --- A2: Without Semantic Embeddings (Lexical TF-IDF Baseline) ---
@@ -119,13 +214,39 @@ class AblationStudyRunner:
             "measured_effect": f"Silhouette dropped from {m_a0['silhouette_score']} to {round(sil_tfidf, 4)}; cluster dispersion increased.",
         }
 
-        # --- A3: Without Sentiment ---
+        # --- A3: Without Sentiment Weighting (Uniform Valence) ---
         scorer_a3 = EmergingScorer(weights={"growth": 0.35, "volume": 0.30, "recentness": 0.25, "negative_sentiment": 0.0, "cluster_coherence": 0.10})
+        cluster_scores_a3 = []
+        for item in cluster_scores_a0:
+            c_id = item["cluster_id"]
+            s3 = scorer_a3.score_issue(
+                cluster_id=c_id,
+                cluster_name=item["name"],
+                total_volume=item["total_volume"],
+                dataset_total_volume=n_docs,
+                growth_rate=item["growth_rate"],
+                recent_volume=item["recent_volume"],
+                negative_sentiment_ratio=0.0,
+                cluster_coherence=item["coherence"],
+            )
+            cluster_scores_a3.append({
+                "cluster_id": c_id,
+                "name": item["name"],
+                "emerging_score": s3["emerging_score"],
+            })
+
+        cluster_scores_a3.sort(key=lambda x: x["emerging_score"], reverse=True)
+        top_a3 = cluster_scores_a3[0]["name"]
+        a3_ranks = {item["cluster_id"]: r for r, item in enumerate(cluster_scores_a3)}
+        max_rank_shift_a3 = max(abs(a0_ranks[cid] - a3_ranks[cid]) for cid in a0_ranks)
+
         results["configurations"]["A3_without_sentiment"] = {
             "configuration": "A3_Without_Sentiment",
-            "description": "Uniform Sentiment Valence (No negative ratio prioritization)",
+            "description": "Uniform Sentiment Valence (Empirical ranking without negative ratio prioritization)",
             "weights_used": scorer_a3.weights,
-            "measured_effect": "Neutral operational inquiries compete directly with severe service complaints, deflating urgency.",
+            "top_prioritized_issue": top_a3,
+            "max_rank_displacement": max_rank_shift_a3,
+            "measured_effect": f"Removing negative sentiment weighting shifts issue rankings by up to {max_rank_shift_a3} position(s); top issue becomes '{top_a3}' as complaints lose priority boost over neutral volume.",
         }
 
         # --- A4: Without Association Significance Filtering ---
@@ -167,33 +288,56 @@ class AblationStudyRunner:
 
         # --- A5: Without Evidence Stance Verification ---
         ev_retriever = EvidenceRetriever(embedder=embedder, top_k=15)
-        sentiments = ["negative" if any(w in t.lower() for w in ["delay", "cancel", "lost", "bad", "terrible", "late"]) else "neutral" for t in texts]
+        query = "flight delay"
+        candidate_factor = "delay"
+
+        # Correct cosine similarity computed against the actual query vector
+        query_vec = embedder.encode(query, use_cache=True)
+        if query_vec.ndim == 2:
+            query_vec = query_vec[0]
+        q_norm = np.linalg.norm(query_vec)
+        if q_norm > 0:
+            query_vec = query_vec / q_norm
+
+        emb_norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+        emb_norms = np.where(emb_norms == 0, 1e-9, emb_norms)
+        norm_embeddings = embeddings / emb_norms
+        sims = np.dot(norm_embeddings, query_vec).flatten()
+        top_15_indices = sims.argsort()[::-1][:15]
+
+        # Naive unverified baseline: classifies top 15 by raw sentiment alone
+        naive_supporting_indices = [int(idx) for idx in top_15_indices if sentiments[int(idx)] == "negative"]
+        naive_supp_count = len(naive_supporting_indices)
+
+        # Proposed Hypothesis-Conditioned Stance Verification
         ev_res = ev_retriever.retrieve_evidence(
-            query="flight delay",
+            query=query,
             texts=texts,
             embeddings=embeddings,
             sentiments=sentiments,
-            candidate_factor="delay",
+            candidate_factor=candidate_factor,
             similarity_threshold=0.20,
         )
         verified_supp = len(ev_res["supporting"])
         verified_contra = len(ev_res["contradicting"])
         abstention_count = len(ev_res.get("uncertain", []))
 
-        # Naive unverified baseline: classification by negative sentiment alone without factor verification
-        naive_supp = sum(1 for i, s in enumerate(sentiments) if s == "negative" and np.dot(embeddings[i], embeddings[0]) > 0.20)
-        false_support_suppression = max(0, min(15, naive_supp) - verified_supp)
+        # Check how many naive negative items lacked verified factor reference
+        unverified_in_naive = sum(
+            1 for idx in naive_supporting_indices
+            if not ev_retriever.verify_factor_reference(texts[idx], candidate_factor)
+        )
 
         results["configurations"]["A5_without_evidence_verification"] = {
             "configuration": "A5_Without_Evidence_Verification",
             "description": "Naive Sentiment Retrieval vs Hypothesis-Conditioned Stance Verification",
-            "supporting_count": verified_supp,
+            "naive_supporting_count": naive_supp_count,
+            "verified_supporting_count": verified_supp,
             "contradicting_count": verified_contra,
             "neutral_count": len(ev_res["neutral"]),
             "uncertain_abstention_count": abstention_count,
-            "unverified_supporting_count": min(15, naive_supp),
-            "false_support_suppression": false_support_suppression,
-            "measured_effect": f"Stance verification prevented {abstention_count} ambiguous or unverified feedback items from being falsely labeled as supporting evidence.",
+            "unverified_items_abstained": unverified_in_naive,
+            "measured_effect": f"Of top 15 retrieved items, naive sentiment classification labeled {naive_supp_count} as supporting; stance verification abstained on {abstention_count} items (including {unverified_in_naive} lacking explicit reference to '{candidate_factor}'), guarding against unverified support.",
         }
 
         # --- A6: Without Dimensionality Reduction ---

@@ -2,21 +2,23 @@
   "experiment_name": "RQ4_RQ5_Empirical_Component_Ablation",
   "dataset_identifier": "airline_sample_1000.csv",
   "input_sample_size": 1000,
-  "post_filtering_sample_size": 498,
+  "post_filtering_sample_size": 500,
   "random_seed": 42,
-  "execution_timestamp": "2026-11-21 13:51:40 UTC",
+  "execution_timestamp": "2026-11-21 16:24:15 UTC",
   "configurations": {
     "A0_full_system": {
       "configuration": "A0_Full_System",
-      "description": "Full VoiceMiner (SBERT + SVD-10d + K-Means + c-TF-IDF + Prior-Only Temporal + FDR + Stance)",
-      "clustering_silhouette": 0.0384,
-      "davies_bouldin": 3.8153,
+      "description": "Full VoiceMiner Pipeline (SBERT + SVD-10d + K-Means + c-TF-IDF + Prior-Only Temporal + FDR + Stance)",
+      "clustering_silhouette": 0.0383,
+      "davies_bouldin": 3.8448,
       "topic_diversity": 0.7292,
-      "component_status": "All components active with FDR significance control and stance verification."
+      "top_prioritized_issue": "Usairways & Americanair (Just)",
+      "top_issue_score": 0.7177,
+      "component_status": "All components active with empirical temporal modeling, FDR significance control, and stance verification."
     },
     "A1_without_temporal": {
       "configuration": "A1_Without_Temporal_Modeling",
-      "description": "Static Volume and Sentiment Only (No growth rate or recentness window)",
+      "description": "Static Volume and Sentiment Only (Empirical ranking without growth rate or recentness window)",
       "weights_used": {
         "growth": 0.0,
         "volume": 0.6,
@@ -24,18 +26,20 @@
         "negative_sentiment": 0.25,
         "cluster_coherence": 0.15
       },
-      "measured_effect": "Under temporal modeling, high-growth cluster ranks #1 ('Jetblue & Jfk (Fleek)'); without temporal tracking, static volume dominates ('Flight & Cancelled (Usairways)') delaying detection."
+      "top_prioritized_issue": "Flight & Cancelled (Usairways)",
+      "max_rank_displacement": 2,
+      "measured_effect": "Under empirical temporal modeling, top cluster is 'Usairways & Americanair (Just)'; without temporal features, ranking shifts by up to 2 position(s) favoring static historical volume ('Flight & Cancelled (Usairways)')."
     },
     "A2_without_semantic_embeddings": {
       "configuration": "A2_Without_Semantic_Embeddings",
       "description": "Lexical TF-IDF (1500d) + K-Means Baseline",
-      "clustering_silhouette": 0.0176,
-      "davies_bouldin": 6.3747,
-      "measured_effect": "Silhouette dropped from 0.0384 to 0.0176; cluster dispersion increased."
+      "clustering_silhouette": 0.0148,
+      "davies_bouldin": 6.4158,
+      "measured_effect": "Silhouette dropped from 0.0383 to 0.0148; cluster dispersion increased."
     },
     "A3_without_sentiment": {
       "configuration": "A3_Without_Sentiment",
-      "description": "Uniform Sentiment Valence (No negative ratio prioritization)",
+      "description": "Uniform Sentiment Valence (Empirical ranking without negative ratio prioritization)",
       "weights_used": {
         "growth": 0.35000000000000003,
         "volume": 0.30000000000000004,
@@ -43,33 +47,35 @@
         "negative_sentiment": 0.0,
         "cluster_coherence": 0.10000000000000002
       },
-      "measured_effect": "Neutral operational inquiries compete directly with severe service complaints, deflating urgency."
+      "top_prioritized_issue": "Usairways & Americanair (Just)",
+      "max_rank_displacement": 1,
+      "measured_effect": "Removing negative sentiment weighting shifts issue rankings by up to 1 position(s); top issue becomes 'Usairways & Americanair (Just)' as complaints lose priority boost over neutral volume."
     },
     "A4_without_statistical_filtering": {
       "configuration": "A4_Without_Statistical_Filtering",
       "description": "Raw Association Co-occurrence vs Benjamini-Hochberg FDR Control",
-      "candidates_without_fdr": 3,
+      "candidates_without_fdr": 4,
       "candidates_with_fdr": 2,
-      "measured_effect": "Benjamini-Hochberg FDR control (alpha=0.05) pruned 1 non-significant co-occurring candidate factor(s), retaining 2 statistically validated factors."
+      "measured_effect": "Benjamini-Hochberg FDR control (alpha=0.05) pruned 2 non-significant co-occurring candidate factor(s), retaining 2 statistically validated factors."
     },
     "A5_without_evidence_verification": {
       "configuration": "A5_Without_Evidence_Verification",
       "description": "Naive Sentiment Retrieval vs Hypothesis-Conditioned Stance Verification",
-      "supporting_count": 9,
+      "naive_supporting_count": 14,
+      "verified_supporting_count": 9,
       "contradicting_count": 0,
       "neutral_count": 0,
       "uncertain_abstention_count": 15,
-      "unverified_supporting_count": 15,
-      "false_support_suppression": 6,
-      "measured_effect": "Stance verification prevented 15 ambiguous or unverified feedback items from being falsely labeled as supporting evidence."
+      "unverified_items_abstained": 8,
+      "measured_effect": "Of top 15 retrieved items, naive sentiment classification labeled 14 as supporting; stance verification abstained on 15 items (including 8 lacking explicit reference to 'delay'), guarding against unverified support."
     },
     "A6_without_dimensionality_reduction": {
       "configuration": "A6_Without_Dimensionality_Reduction",
       "description": "Raw Sentence-BERT (384d) + K-Means without SVD reduction",
-      "clustering_silhouette": 0.0347,
-      "davies_bouldin": 3.8406,
-      "calinski_harabasz": 15.32,
-      "measured_effect": "SVD 10d reduction improved silhouette score slightly (0.0347 -> 0.0384) while reducing vector storage by 97.4%."
+      "clustering_silhouette": 0.0368,
+      "davies_bouldin": 3.8942,
+      "calinski_harabasz": 15.38,
+      "measured_effect": "SVD 10d reduction improved silhouette score slightly (0.0368 -> 0.0383) while reducing vector storage by 97.4%."
     }
   }
 }

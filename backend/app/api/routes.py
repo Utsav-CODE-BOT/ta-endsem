@@ -113,7 +113,13 @@ def trigger_analysis(
             similarity_threshold=req.similarity_threshold,
             db=db,
         )
-        return {"message": "Analysis completed successfully", "details": result, "ingestion_stats": stats}
+        is_full_success = result.get("status") == "success"
+        msg = (
+            "Analysis completed successfully"
+            if is_full_success
+            else f"Analysis completed in-memory with warning: {result.get('database_error', 'Database persistence failed')}"
+        )
+        return {"message": msg, "details": result, "ingestion_stats": stats}
     except Exception as e:
         logger.error("Pipeline analysis error: %s", e)
         raise HTTPException(status_code=500, detail=str(e))

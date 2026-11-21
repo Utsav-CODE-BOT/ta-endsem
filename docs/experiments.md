@@ -66,13 +66,17 @@ This document details the experimental protocols, baselines, ablation studies, a
 
 | Configuration | Component Removed / Replaced | Key Measured Metric | Measured Effect / Impact Observation |
 | :--- | :--- | :---: | :--- |
-| **A0: Full System** | Complete VoiceMiner Pipeline | Silhouette: 0.0384, DB: 3.8153 | Balanced multi-factor ranking with FDR significance control and stance verification. |
-| **A1: W/O Temporal** | Static volume and sentiment only | Static volume bound | Static volume bound; high-velocity emerging surges rank low until historical volume accumulates. |
-| **A2: W/O Semantic** | Lexical TF-IDF (1500d) Baseline | Silhouette: 0.0176, DB: 6.3747 | Silhouette dropped from 0.0384 to 0.0176; cluster dispersion increased by +67.1%. |
-| **A3: W/O Sentiment** | Uniform valence (0.33) | Score: 0.6589 | Neutral operational questions compete directly with severe service complaints. |
-| **A4: W/O Statistical Filtering** | Raw co-occurrence vs FDR | 3 raw factors vs 2 FDR-filtered | Benjamini-Hochberg procedure controls the False Discovery Rate (FDR) at alpha=0.05, eliminating non-significant co-occurring noise. |
-| **A5: W/O Evidence Stance** | Raw Retrieval vs Stance | 9 supporting, 15 abstentions | Naive retrieval risks confirmation bias; hypothesis-conditioned stance verification withheld 15 ambiguous/unverified items. |
-| **A6: W/O Dimensionality Reduction** | Raw 384d SBERT (no SVD) | Silhouette: 0.0347, DB: 3.8406 | SVD 10d reduction preserves clustering structure (0.0384 vs 0.0347) while reducing vector storage by 97.4%. |
+| **A0: Full System** | Complete VoiceMiner Pipeline | Silhouette: 0.0383, DB: 3.8448 | Balanced multi-factor ranking (top: 'Usairways & Americanair', score: 0.7177) with FDR significance control and stance verification. |
+| **A1: W/O Temporal** | Static volume and sentiment only | Max rank shift: 2 | Without temporal features, ranking shifts by up to 2 position(s), prioritizing static cumulative volume ('Flight & Cancelled') over surging emerging clusters. |
+| **A2: W/O Semantic** | Lexical TF-IDF (1500d) Baseline | Silhouette: 0.0148, DB: 6.4158 | Silhouette dropped from 0.0383 to 0.0148 (-61.4%); cluster dispersion increased (+66.9%). |
+| **A3: W/O Sentiment** | Uniform valence (0.0% weight) | Max rank shift: 1 | Removing negative sentiment weighting shifts issue rankings by up to 1 position(s); complaints lose prioritization boost over neutral volume. |
+| **A4: W/O Statistical Filtering** | Raw co-occurrence vs FDR | 4 raw factors vs 2 FDR-filtered | Benjamini-Hochberg procedure (alpha=0.05) pruned 2 non-significant co-occurring candidate factors, preventing spurious noise. |
+| **A5: W/O Evidence Stance** | Naive Retrieval vs Stance Verification | 14 naive vs 9 verified supp (15 abstained) | Naive retrieval risks confirmation bias; hypothesis-conditioned stance verification withheld 15 items (8 lacking explicit factor reference) to UNCERTAIN. |
+| **A6: W/O Dimensionality Reduction** | Raw 384d SBERT (no SVD) | Silhouette: 0.0368, DB: 3.8942 | SVD 10d reduction preserves clustering structure (0.0383 vs 0.0368) while reducing vector storage by 97.4%. |
+
+### Stance Verification Ground-Truth Limitation Disclosure
+> [!NOTE]
+> Stance classification in A5 evaluates hypothesis-conditioned keyword and polarity alignment against top-15 cosine retrieved items. Contradictory evidence retrieval relies on polarity and semantic distance to identify operational functioning cues; generic positive sentiment unrelated to the specific hypothesis factor abstains to `UNCERTAIN` rather than registering as verified contradictory evidence. Claims are reported transparently as model abstentions without assuming unverified ground truth.
 
 ---
 

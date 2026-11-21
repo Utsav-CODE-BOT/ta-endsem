@@ -133,3 +133,6 @@ To eliminate confirmation bias, semantic search partitions retrieved customer te
 - **Contradictory / Counter Evidence**: Feedback explicitly referencing the factor with **positive sentiment / resolution cues** indicating satisfaction or problem-free experiences.
 - **Neutral Evidence**: Objective queries and informational comments mentioning the factor without strong affective stance.
 - **Uncertain Evidence**: Semantically related feedback that fails lexical verification for the specific candidate factor entity.
+
+> [!NOTE]
+> **Stance Classification Limitation**: Contradictory evidence retrieval relies on polarity and semantic distance to identify operational functioning cues; generic positive sentiment unrelated to the specific hypothesis factor may abstain to `UNCERTAIN` rather than registering as verified contradictory evidence. Claims are reported transparently as model abstentions without assuming unverified ground truth.

@@ -186,7 +186,7 @@ pip install -r requirements.txt
 
 ### 2. Run Tests & Empirical Experiments
 ```bash
-# Run complete test suite (19 tests)
+# Run complete test suite (40 passing unit and integration tests)
 pytest backend/tests -v
 
 # Run research benchmark evaluations (RQ1 - RQ5)

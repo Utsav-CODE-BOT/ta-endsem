@@ -62,7 +62,7 @@ class PipelineService:
         self.temporal_available: bool = True
         self.similarity_threshold: float = 0.35
         self.is_ready = False
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
     @classmethod
     def get_instance(cls) -> "PipelineService":
@@ -468,7 +468,13 @@ class PipelineService:
             aspects_summary=aspect_totals,
         )
 
-        # 9. Atomic snapshot publication under lock
+        # 9. Sync with Database in a single atomic transaction
+        db_saved = True
+        db_error = None
+        if db is not None:
+            db_saved, db_error = self._save_to_database(db, local_df, cluster_profiles, emerging_issues, all_hypotheses)
+
+        # 10. Atomic snapshot publication under lock
         with self._lock:
             self.similarity_threshold = float(similarity_threshold)
             self.clusterer = local_clusterer
@@ -481,12 +487,6 @@ class PipelineService:
             self.current_hypotheses = all_hypotheses
             self.current_graph = local_graph
             self.is_ready = True
-
-        # 10. Sync with Database if DB session provided
-        db_saved = True
-        db_error = None
-        if db is not None:
-            db_saved, db_error = self._save_to_database(db, local_df, cluster_profiles, emerging_issues, all_hypotheses)
 
         logger.info("VoiceMiner pipeline execution successfully completed.")
 
@@ -515,14 +515,13 @@ class PipelineService:
         hypotheses: List[Dict[str, Any]],
     ):
         try:
-            # Clear old records
+            # Single atomic transaction: clear old records without committing early
             db.query(RootCauseHypothesisModel).delete()
             db.query(IssueMetricModel).delete()
             db.query(IssueMembershipModel).delete()
             db.query(IssueModel).delete()
             db.query(NLPResultModel).delete()
             db.query(DocumentModel).delete()
-            db.commit()
 
             # Insert documents & NLP results
             for idx, row in df.iterrows():
@@ -689,134 +688,137 @@ class PipelineService:
         }
 
     def get_dashboard_summary(self) -> Dict[str, Any]:
-        """Returns high-level statistics for the Overview Dashboard."""
-        if not self.is_ready or self.current_df is None:
-            return {
-                "total_feedback": 0,
-                "sentiment_distribution": {"negative": 0.0, "neutral": 0.0, "positive": 0.0},
-                "primary_emotions": {},
-                "active_issues": 0,
-                "emerging_issues_count": 0,
-                "critical_issues_count": 0,
-                "high_priority_count": 0,
-                "top_aspects": [],
-                "sources": [],
-                "temporal_available": self.temporal_available,
-                "date_range": {"start": "N/A", "end": "N/A"},
+        """Returns high-level statistics for the Overview Dashboard under snapshot lock."""
+        with self._lock:
+            if not self.is_ready or self.current_df is None:
+                return {
+                    "total_feedback": 0,
+                    "sentiment_distribution": {"negative": 0.0, "neutral": 0.0, "positive": 0.0},
+                    "primary_emotions": {},
+                    "active_issues": 0,
+                    "emerging_issues_count": 0,
+                    "critical_issues_count": 0,
+                    "high_priority_count": 0,
+                    "top_aspects": [],
+                    "sources": [],
+                    "temporal_available": self.temporal_available,
+                    "date_range": {"start": "N/A", "end": "N/A"},
+                }
+
+            df = self.current_df
+            total = len(df)
+            sent_counts = df["sentiment"].value_counts(normalize=True).to_dict()
+            sent_dist = {
+                "negative": round(sent_counts.get("negative", 0.0) * 100, 1),
+                "neutral": round(sent_counts.get("neutral", 0.0) * 100, 1),
+                "positive": round(sent_counts.get("positive", 0.0) * 100, 1),
             }
 
-        df = self.current_df
-        total = len(df)
-        sent_counts = df["sentiment"].value_counts(normalize=True).to_dict()
-        sent_dist = {
-            "negative": round(sent_counts.get("negative", 0.0) * 100, 1),
-            "neutral": round(sent_counts.get("neutral", 0.0) * 100, 1),
-            "positive": round(sent_counts.get("positive", 0.0) * 100, 1),
-        }
+            emotion_counts = df["emotion"].value_counts().to_dict()
 
-        emotion_counts = df["emotion"].value_counts().to_dict()
+            # Aspects count
+            aspect_counts = {}
+            for asps in df["aspects"]:
+                for item in asps:
+                    a = item["aspect"]
+                    aspect_counts[a] = aspect_counts.get(a, 0) + 1
+            top_aspects = [
+                {"aspect": k, "count": v, "percentage": round(v / total * 100, 1)}
+                for k, v in sorted(aspect_counts.items(), key=lambda x: x[1], reverse=True)[:6]
+            ]
 
-        # Aspects count
-        aspect_counts = {}
-        for asps in df["aspects"]:
-            for item in asps:
-                a = item["aspect"]
-                aspect_counts[a] = aspect_counts.get(a, 0) + 1
-        top_aspects = [
-            {"aspect": k, "count": v, "percentage": round(v / total * 100, 1)}
-            for k, v in sorted(aspect_counts.items(), key=lambda x: x[1], reverse=True)[:6]
-        ]
+            # Sources
+            source_counts = df["source"].value_counts().to_dict()
+            sources_list = [
+                {"source": k, "count": v, "percentage": round(v / total * 100, 1)}
+                for k, v in sorted(source_counts.items(), key=lambda x: x[1], reverse=True)[:6]
+            ]
 
-        # Sources
-        source_counts = df["source"].value_counts().to_dict()
-        sources_list = [
-            {"source": k, "count": v, "percentage": round(v / total * 100, 1)}
-            for k, v in sorted(source_counts.items(), key=lambda x: x[1], reverse=True)[:6]
-        ]
+            critical_count = sum(1 for e in self.current_emerging if e["priority"] == "CRITICAL")
+            high_count = sum(1 for e in self.current_emerging if e["priority"] == "HIGH")
 
-        critical_count = sum(1 for e in self.current_emerging if e["priority"] == "CRITICAL")
-        high_count = sum(1 for e in self.current_emerging if e["priority"] == "HIGH")
+            valid_times = [t for t in df["timestamp"] if pd.notna(t) and hasattr(t, "strftime")]
+            min_date = min(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
+            max_date = max(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
 
-        valid_times = [t for t in df["timestamp"] if pd.notna(t) and hasattr(t, "strftime")]
-        min_date = min(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
-        max_date = max(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
-
-        return {
-            "total_feedback": total,
-            "sentiment_distribution": sent_dist,
-            "primary_emotions": emotion_counts,
-            "active_issues": len(self.current_clusters),
-            "emerging_issues_count": len(self.current_emerging),
-            "critical_issues_count": critical_count,
-            "high_priority_count": high_count,
-            "top_aspects": top_aspects,
-            "sources": sources_list,
-            "temporal_available": self.temporal_available,
-            "date_range": {"start": min_date, "end": max_date},
-        }
+            return {
+                "total_feedback": total,
+                "sentiment_distribution": sent_dist,
+                "primary_emotions": emotion_counts,
+                "active_issues": len(self.current_clusters),
+                "emerging_issues_count": len(self.current_emerging),
+                "critical_issues_count": critical_count,
+                "high_priority_count": high_count,
+                "top_aspects": top_aspects,
+                "sources": sources_list,
+                "temporal_available": self.temporal_available,
+                "date_range": {"start": min_date, "end": max_date},
+            }
 
     def generate_report(self, include_raw_evidence: bool = True) -> Dict[str, Any]:
         """
-        Compiles an evidence-grounded executive and root-cause report.
+        Compiles an evidence-grounded executive and root-cause report under snapshot lock.
         """
-        dashboard = self.get_dashboard_summary()
+        with self._lock:
+            dashboard = self.get_dashboard_summary()
 
-        emerging_summary = []
-        for e in self.current_emerging[:4]:
-            emerging_summary.append({
-                "issue_name": e["issue_name"],
-                "emerging_score": e["emerging_score"],
-                "priority": e["priority"],
-                "growth_rate_pct": e["growth_rate_pct"],
-                "volume": e["total_volume"],
-                "negative_sentiment_ratio": e["negative_sentiment_ratio"],
-                "confidence_level": e.get("confidence_level", "MODERATE_STATISTICAL_SUPPORT"),
-            })
+            emerging_summary = []
+            for e in self.current_emerging[:4]:
+                emerging_summary.append({
+                    "issue_name": e.get("name", e.get("issue_name", "Unknown Issue")),
+                    "emerging_score": e["emerging_score"],
+                    "priority": e["priority"],
+                    "growth_rate_pct": e["growth_rate_pct"],
+                    "volume": e["total_volume"],
+                    "negative_sentiment_ratio": e["negative_sentiment_ratio"],
+                    "confidence_level": e.get("confidence_level", "MODERATE_STATISTICAL_SUPPORT"),
+                })
 
-        hypotheses_summary = []
-        for h in self.current_hypotheses[:5]:
-            hypotheses_summary.append({
-                "associated_issue": h["associated_issue"],
-                "candidate_factor": h["candidate_factor"],
-                "confidence": h["confidence"],
-                "lift": h["lift"],
-                "npmi": h.get("npmi", 0.0),
-                "is_statistically_significant": h.get("is_statistically_significant", False),
-                "temporal_relationship": h["temporal_relationship"],
-                "interpretation": h["interpretation"],
-            })
+            hypotheses_summary = []
+            for h in self.current_hypotheses[:5]:
+                hypotheses_summary.append({
+                    "associated_issue": h["associated_issue"],
+                    "candidate_factor": h["candidate_factor"],
+                    "confidence": h["confidence"],
+                    "lift": h["lift"],
+                    "npmi": h.get("npmi", 0.0),
+                    "is_statistically_significant": h.get("is_statistically_significant", False),
+                    "temporal_relationship": h["temporal_relationship"],
+                    "interpretation": h["interpretation"],
+                })
 
-        avg_coherence = (
-            round(float(np.mean([cl.get("cluster_coherence", 0.70) for cl in self.current_clusters])), 3)
-            if self.current_clusters else 0.70
-        )
+            avg_coherence = (
+                round(float(np.mean([cl.get("cluster_coherence", 0.70) for cl in self.current_clusters])), 3)
+                if self.current_clusters else 0.70
+            )
 
-        return {
-            "title": "VoiceMiner Executive Intelligence & Root-Cause Audit",
-            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-            "executive_summary": (
-                f"Analysis of {dashboard['total_feedback']:,} multi-source customer records detected "
-                f"{dashboard['active_issues']} distinct semantic issue clusters. "
-                f"We identified {dashboard['critical_issues_count']} CRITICAL and {dashboard['high_priority_count']} HIGH "
-                f"priority emerging issues exhibiting anomalous temporal acceleration and negative sentiment density. "
-                f"Candidate factor mining discovered statistical associations linking operational disruptions with key entity patterns."
-            ),
-            "emerging_issues_summary": emerging_summary,
-            "candidate_root_causes": hypotheses_summary,
-            "evidence_audit": {
-                "total_documents_analyzed": dashboard["total_feedback"],
-                "negative_sentiment_pct": dashboard["sentiment_distribution"]["negative"],
-                "cluster_coherence_avg": avg_coherence,
-            },
-            "limitations": [
-                "Discovered factors represent empirical statistical associations and temporal precedence; they do not prove direct causation without randomized intervention or counterfactual modeling.",
-                "Short text expressions and sarcasm may introduce variance in sentence-level emotion calibration.",
-                "Findings are bounded by the temporal and domain window of the ingested dataset.",
-                "Uncertain or sparse temporal data is flagged and excluded from causal or change-point claims.",
-            ],
-            "recommended_investigation_areas": [
-                "Conduct operational cross-checks on flight dispatch gates and baggage transit checkpoints corresponding to the peak surge dates.",
-                "Review digital app release logs and payment webhook error rates during the detected acceleration window.",
-                "Engage front-line support staff to cross-examine customer ticket resolution procedures for recurring bottlenecks.",
-            ],
-        }
+            return {
+                "title": "VoiceMiner Executive Intelligence & Root-Cause Audit",
+                "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
+                "executive_summary": (
+                    f"Analysis of {dashboard['total_feedback']:,} multi-source customer records detected "
+                    f"{dashboard['active_issues']} distinct semantic issue clusters. "
+                    f"We identified {dashboard['critical_issues_count']} CRITICAL and {dashboard['high_priority_count']} HIGH "
+                    f"priority emerging issues exhibiting anomalous temporal acceleration and negative sentiment density. "
+                    f"Candidate factor mining discovered statistical associations linking operational disruptions with key entity patterns."
+                ),
+                "emerging_issues_summary": emerging_summary,
+                "candidate_root_causes": hypotheses_summary,
+                "evidence_audit": {
+                    "total_documents_analyzed": dashboard["total_feedback"],
+                    "negative_sentiment_pct": dashboard["sentiment_distribution"]["negative"],
+                    "cluster_coherence_avg": avg_coherence,
+                },
+                "limitations": [
+                    "Discovered factors represent empirical statistical associations and temporal precedence; they do not prove direct causation without randomized intervention or counterfactual modeling.",
+                    "Short text expressions and sarcasm may introduce variance in sentence-level emotion calibration.",
+                    "Findings are bounded by the temporal and domain window of the ingested dataset.",
+                    "Uncertain or sparse temporal data is flagged and excluded from causal or change-point claims.",
+                    "Contradictory evidence retrieval relies on polarity and semantic distance to identify operational functioning cues; generic positive sentiment unrelated to the specific hypothesis factor may abstain to UNCERTAIN rather than registering as verified contradictory evidence.",
+                ],
+                "recommended_investigation_areas": [
+                    "Conduct operational cross-checks on flight dispatch gates and baggage transit checkpoints corresponding to the peak surge dates.",
+                    "Review digital app release logs and payment webhook error rates during the detected acceleration window.",
+                    "Engage front-line support staff to cross-examine customer ticket resolution procedures for recurring bottlenecks.",
+                ],
+            }
