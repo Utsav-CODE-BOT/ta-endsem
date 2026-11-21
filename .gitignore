@@ -33,6 +33,7 @@ htmlcov/
 .vscode/
 *.swp
 *.swo
+.metals/
 
 # Node / Frontend
 frontend/node_modules/

@@ -1,16 +1,22 @@
 import re
 import html
 import unicodedata
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 
 class TextPreprocessor:
     """
     Configurable text preprocessing module for multi-source customer text.
     Maintains dual representations:
-    1. clean_text: preserves casing, grammar, and emotional cues for transformer models.
+    1. clean_text: preserves casing, grammar, punctuation, and emotional cues for transformer models.
     2. normalized_text: lowercased, token-normalized for lexical indexing & baselines.
     """
+
+    ENGLISH_STOPWORDS_SAMPLE = {
+        "the", "and", "is", "to", "a", "in", "that", "for", "of", "with",
+        "on", "at", "by", "this", "i", "my", "it", "you", "we", "was",
+        "flight", "service", "customer", "have", "not", "be", "are", "from"
+    }
 
     def __init__(
         self,
@@ -34,7 +40,8 @@ class TextPreprocessor:
     def clean(self, raw_text: Optional[str]) -> str:
         """
         Cleans text for Transformer models. Preserves punctuation, sentiment cues,
-        and casing while removing HTML, resolving entities, and standardizing whitespace.
+        and casing while removing HTML, resolving entities, standardizing whitespace,
+        and normalizing repetitive characters.
         """
         if not raw_text or not isinstance(raw_text, str):
             return ""
@@ -45,7 +52,7 @@ class TextPreprocessor:
         # Remove HTML tags
         text = self._html_tag_re.sub(" ", text)
 
-        # Normalize Unicode characters
+        # Normalize Unicode characters (NFKC)
         text = unicodedata.normalize("NFKC", text)
 
         # Normalize URLs
@@ -74,14 +81,31 @@ class TextPreprocessor:
 
     def detect_language(self, text: str) -> str:
         """
-        Heuristic language detection. Detects English vs Non-English based on
-        ASCII ratio and basic lexical features.
+        Language identification combining character script detection and
+        lexical vocabulary checks. Avoids misclassifying non-English Latin text as English.
         """
-        if not text:
+        if not text or not text.strip():
             return "unknown"
+
+        # Check for non-Latin scripts (Cyrillic, Arabic, CJK, Devanagari)
+        non_latin_chars = sum(
+            1 for c in text
+            if unicodedata.name(c, "").startswith(("CYRILLIC", "ARABIC", "CJK", "DEVANAGARI", "HIRAGANA", "KATAKANA"))
+        )
+        if non_latin_chars > max(2, len(text) * 0.15):
+            return "non-en"
+
         ascii_chars = sum(1 for c in text if ord(c) < 128)
         ratio = ascii_chars / len(text)
-        if ratio > 0.85:
+        if ratio < 0.70:
+            return "non-en"
+
+        tokens = set(re.findall(r"\b[a-z]{2,}\b", text.lower()))
+        common_matches = tokens.intersection(self.ENGLISH_STOPWORDS_SAMPLE)
+
+        if len(common_matches) >= 1 or len(tokens) <= 3:
+            return "en"
+        elif ratio > 0.90:
             return "en"
         return "non-en"
 
@@ -99,7 +123,7 @@ class TextPreprocessor:
             return False, f"Too long (greater than {self.max_words} words)"
         return True, None
 
-    def process_record(self, raw_text: str) -> Dict[str, any]:
+    def process_record(self, raw_text: str) -> Dict[str, Any]:
         """
         Full preprocessing pass for a single text record.
         """

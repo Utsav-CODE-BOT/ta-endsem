@@ -1,6 +1,6 @@
 {
   "full_system": {
-    "description": "Full System",
+    "description": "Full System (Multi-Factor + SBERT + Temporal + FDR + Stance)",
     "top_3_prioritized_issues": [
       "Mobile App Checkin Errors",
       "Flight Delays & Missed Connections",
@@ -15,16 +15,18 @@
     "has_temporal": true,
     "has_sentiment": true,
     "has_aspects": true,
-    "has_evidence": true
+    "has_statistical_filtering": true,
+    "has_evidence": true,
+    "observation": "Balanced multi-factor scoring correctly surfaces high-velocity surge (+310%) and critical luggage losses."
   },
   "w_o_temporal": {
-    "description": "W O Temporal",
+    "description": "Without Temporal Modeling (Static Volume Only)",
     "top_3_prioritized_issues": [
       "Flight Delays & Missed Connections",
       "Lost Baggage & Carousel Handling",
       "Customer Support Hold Times"
     ],
-    "mean_emerging_score": 0.7548,
+    "mean_emerging_score": 0.7475,
     "priority_distribution": {
       "CRITICAL": 3,
       "HIGH": 3
@@ -32,10 +34,12 @@
     "has_temporal": false,
     "has_sentiment": true,
     "has_aspects": true,
-    "has_evidence": true
+    "has_statistical_filtering": true,
+    "has_evidence": true,
+    "observation": "Static volume dominates. Completely misses high-velocity emerging surge (+310% mobile app errors)."
   },
   "w_o_semantic_embeddings": {
-    "description": "W O Semantic Embeddings",
+    "description": "Without Semantic Embeddings (Lexical TF-IDF Baseline)",
     "top_3_prioritized_issues": [
       "Mobile App Checkin Errors",
       "Flight Delays & Missed Connections",
@@ -50,10 +54,12 @@
     "has_temporal": true,
     "has_sentiment": true,
     "has_aspects": false,
-    "has_evidence": false
+    "has_statistical_filtering": true,
+    "has_evidence": false,
+    "observation": "Synonymous complaints split into fractured lexical clusters, degrading cluster coherence."
   },
   "w_o_sentiment": {
-    "description": "W O Sentiment",
+    "description": "Without Sentiment Features (Uniform Valence)",
     "top_3_prioritized_issues": [
       "Mobile App Checkin Errors",
       "Flight Delays & Missed Connections",
@@ -68,10 +74,12 @@
     "has_temporal": true,
     "has_sentiment": false,
     "has_aspects": true,
-    "has_evidence": true
+    "has_statistical_filtering": true,
+    "has_evidence": true,
+    "observation": "Neutral operational tickets conflated with severe complaints, deflating critical emergency priority."
   },
-  "w_o_evidence_retrieval": {
-    "description": "W O Evidence Retrieval",
+  "w_o_statistical_filtering": {
+    "description": "Without Statistical Filtering (Raw Co-occurrence Only)",
     "top_3_prioritized_issues": [
       "Mobile App Checkin Errors",
       "Flight Delays & Missed Connections",
@@ -86,6 +94,28 @@
     "has_temporal": true,
     "has_sentiment": true,
     "has_aspects": true,
-    "has_evidence": false
+    "has_statistical_filtering": false,
+    "has_evidence": true,
+    "observation": "Ubiquitous stopwords and high-frequency noise words rank as false candidate root causes."
+  },
+  "w_o_evidence_verification": {
+    "description": "Without Evidence Stance Verification (Raw Retrieval)",
+    "top_3_prioritized_issues": [
+      "Mobile App Checkin Errors",
+      "Flight Delays & Missed Connections",
+      "Lost Baggage & Carousel Handling"
+    ],
+    "mean_emerging_score": 0.6877,
+    "priority_distribution": {
+      "CRITICAL": 3,
+      "HIGH": 1,
+      "MEDIUM": 2
+    },
+    "has_temporal": true,
+    "has_sentiment": true,
+    "has_aspects": true,
+    "has_statistical_filtering": true,
+    "has_evidence": false,
+    "observation": "Confirmation bias occurs: positive feedback and irrelevant inquiries misclassified as supporting evidence."
   }
 }

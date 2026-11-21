@@ -11,6 +11,7 @@ class IngestionStats(BaseModel):
     sources_detected: List[str]
     languages_detected: List[str]
     sample_columns: List[str]
+    temporal_available: Optional[bool] = True
 
 
 class AnalyzeRequest(BaseModel):
@@ -30,6 +31,7 @@ class DashboardSummary(BaseModel):
     top_aspects: List[Dict[str, Any]]
     sources: List[Dict[str, Any]]
     date_range: Dict[str, str]
+    temporal_available: Optional[bool] = True
 
 
 class IssueClusterItem(BaseModel):
@@ -41,6 +43,8 @@ class IssueClusterItem(BaseModel):
     center_2d: List[float]
     sentiment_distribution: Dict[str, float]
     primary_aspect: str
+    cluster_coherence: Optional[float] = None
+    coherence_reliable: Optional[bool] = None
 
 
 class IssueDetailResponse(BaseModel):
@@ -53,6 +57,8 @@ class IssueDetailResponse(BaseModel):
     center_2d: List[float]
     exemplars: List[Dict[str, Any]]
     metrics: Optional[Dict[str, Any]] = None
+    cluster_coherence: Optional[float] = None
+    coherence_reliable: Optional[bool] = None
 
 
 class EmergingIssueItem(BaseModel):
@@ -67,10 +73,13 @@ class EmergingIssueItem(BaseModel):
     cluster_coherence: float
     first_detected_date: str
     component_breakdown: Dict[str, float]
+    confidence_level: Optional[str] = "MODERATE_STATISTICAL_SUPPORT"
+    evidence_sufficient: Optional[bool] = True
+    surge_probability: Optional[float] = None
 
 
 class RootCauseHypothesisItem(BaseModel):
-    id: int
+    id: Optional[int] = None
     issue_id: int
     candidate_factor: str
     factor_type: str
@@ -81,6 +90,11 @@ class RootCauseHypothesisItem(BaseModel):
     co_occurrence_count: int
     total_mention_count: int
     interpretation: str
+    npmi: Optional[float] = 0.0
+    fisher_p_value: Optional[float] = None
+    adjusted_p_value: Optional[float] = None
+    is_statistically_significant: Optional[bool] = False
+    association_strength_score: Optional[float] = None
 
 
 class EvidenceItem(BaseModel):
@@ -90,6 +104,8 @@ class EvidenceItem(BaseModel):
     sentiment: str
     date: str
     source: str
+    stance: Optional[str] = None
+    factor_verified: Optional[bool] = None
 
 
 class EvidenceResponse(BaseModel):
@@ -97,6 +113,8 @@ class EvidenceResponse(BaseModel):
     supporting: List[EvidenceItem]
     contradicting: List[EvidenceItem]
     neutral: List[EvidenceItem]
+    uncertain: Optional[List[EvidenceItem]] = []
+    candidate_factor: Optional[str] = None
     stats: Dict[str, Any]
 
 

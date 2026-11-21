@@ -1,6 +1,6 @@
 import re
 import logging
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Any
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -10,8 +10,8 @@ class AspectExtractor:
     """
     Hybrid semantic aspect extraction engine.
     1. Extracts candidate noun-phrases, frequent terms, and contextual patterns.
-    2. Maps candidate phrases via SentenceEmbeddings to canonical semantic aspects.
-    3. Discovers dynamic open-domain aspects when phrases fall outside standard clusters.
+    2. Uses fast lexical canonical indexing with semantic SBERT fallback.
+    3. Maps candidate phrases to canonical semantic aspects or discovers novel domain aspects.
     """
 
     DEFAULT_CANONICAL_ASPECTS = {
@@ -55,6 +55,14 @@ class AspectExtractor:
         self._aspect_vectors: Optional[np.ndarray] = None
         self._discovered_aspects: Dict[str, np.ndarray] = {}
 
+        # Precompute canonical keyword map for high-speed deterministic indexing
+        self._keyword_to_aspect: Dict[str, str] = {}
+        for asp, desc in self.canonical_aspects.items():
+            for w in desc.split():
+                w_clean = w.lower().strip()
+                if len(w_clean) > 2 and w_clean not in self.STOPWORDS:
+                    self._keyword_to_aspect[w_clean] = asp
+
     def _ensure_vectors(self):
         if self._aspect_vectors is None:
             if self._embedder is None:
@@ -66,7 +74,7 @@ class AspectExtractor:
 
     def extract_candidates(self, text: str) -> List[str]:
         """
-        Extract candidate aspect phrases (unigrams and bigrams/trigrams)
+        Extract candidate aspect phrases (unigrams and bigrams)
         using regex pattern matching and stopword filtering.
         """
         if not text:
@@ -74,7 +82,6 @@ class AspectExtractor:
 
         clean = re.sub(r"[^\w\s-]", " ", text.lower())
         tokens = [w for w in clean.split() if len(w) > 2]
-
         candidates: List[str] = []
 
         # Extract meaningful unigrams
@@ -97,57 +104,73 @@ class AspectExtractor:
                 seen.add(c)
                 deduped.append(c)
 
-        return deduped[:12]
+        return deduped[:6]
 
-    def extract_aspects(self, text: str) -> List[Dict[str, any]]:
+    def extract_aspects(self, text: str) -> List[Dict[str, Any]]:
         """
         Extract and normalize aspects from a given text.
-        Returns list of dicts:
-        [
-            {"aspect": "PAYMENT", "matched_term": "credit card", "confidence": 0.78, "type": "canonical"},
-            ...
-        ]
+        Fast-paths direct canonical keywords, then falls back to SBERT embeddings.
         """
         candidates = self.extract_candidates(text)
         if not candidates:
             return []
 
-        self._ensure_vectors()
-
-        candidate_vectors = self._embedder.encode(candidates, use_cache=True)
-        # Compute cosine similarity between candidates and canonical aspects
-        # Shape: (num_candidates, num_aspects)
-        sim_matrix = np.dot(candidate_vectors, self._aspect_vectors.T)
-
         extracted = []
-        detected_aspects = set()
+        detected_aspects: Set[str] = set()
+        unmatched_candidates = []
 
-        for c_idx, candidate in enumerate(candidates):
-            best_aspect_idx = int(np.argmax(sim_matrix[c_idx]))
-            max_sim = float(sim_matrix[c_idx, best_aspect_idx])
+        # 1. Fast-path: check direct keyword matches
+        for cand in candidates:
+            words = cand.split()
+            matched_asp = None
+            for w in words:
+                if w in self._keyword_to_aspect:
+                    matched_asp = self._keyword_to_aspect[w]
+                    break
+            if matched_asp and matched_asp not in detected_aspects:
+                detected_aspects.add(matched_asp)
+                extracted.append({
+                    "aspect": matched_asp,
+                    "matched_term": cand,
+                    "confidence": 0.92,
+                    "type": "canonical",
+                })
+            elif not matched_asp:
+                unmatched_candidates.append(cand)
 
-            if max_sim >= self.similarity_threshold:
-                aspect_name = self._aspect_names[best_aspect_idx]
-                if aspect_name not in detected_aspects:
-                    detected_aspects.add(aspect_name)
-                    extracted.append({
-                        "aspect": aspect_name,
-                        "matched_term": candidate,
-                        "confidence": round(max_sim, 4),
-                        "type": "canonical",
-                    })
-            elif max_sim < 0.35 and len(candidate.split()) > 1:
-                # Potential discovered domain aspect
-                discovered_name = candidate.upper().replace(" ", "_")
-                if discovered_name not in detected_aspects and len(detected_aspects) < 4:
-                    detected_aspects.add(discovered_name)
-                    extracted.append({
-                        "aspect": discovered_name,
-                        "matched_term": candidate,
-                        "confidence": round(0.50, 4),
-                        "type": "discovered",
-                    })
+        # 2. Semantic fallback for unmatched phrases if needed
+        if unmatched_candidates and len(detected_aspects) < 3:
+            self._ensure_vectors()
+            candidate_vectors = self._embedder.encode(unmatched_candidates, use_cache=True)
+            if candidate_vectors.ndim == 1:
+                candidate_vectors = candidate_vectors.reshape(1, -1)
 
-        # Sort by confidence descending
+            sim_matrix = np.dot(candidate_vectors, self._aspect_vectors.T)
+
+            for c_idx, candidate in enumerate(unmatched_candidates):
+                best_aspect_idx = int(np.argmax(sim_matrix[c_idx]))
+                max_sim = float(sim_matrix[c_idx, best_aspect_idx])
+
+                if max_sim >= self.similarity_threshold:
+                    aspect_name = self._aspect_names[best_aspect_idx]
+                    if aspect_name not in detected_aspects:
+                        detected_aspects.add(aspect_name)
+                        extracted.append({
+                            "aspect": aspect_name,
+                            "matched_term": candidate,
+                            "confidence": round(max_sim, 4),
+                            "type": "canonical",
+                        })
+                elif max_sim < 0.35 and len(candidate.split()) > 1:
+                    discovered_name = candidate.upper().replace(" ", "_")
+                    if discovered_name not in detected_aspects and len(detected_aspects) < 4:
+                        detected_aspects.add(discovered_name)
+                        extracted.append({
+                            "aspect": discovered_name,
+                            "matched_term": candidate,
+                            "confidence": 0.50,
+                            "type": "discovered",
+                        })
+
         extracted.sort(key=lambda x: x["confidence"], reverse=True)
         return extracted[:5]

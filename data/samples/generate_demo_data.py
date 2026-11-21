@@ -2,79 +2,186 @@
 Generates synthetic multi-domain SaaS / E-commerce customer feedback dataset.
 Labeled explicitly as: DEMO / SYNTHETIC DATA per Section 49.
 Used to evaluate cross-domain robustness (RQ5) alongside the real US Airline benchmark.
+Features:
+- Parameterized natural language variations (eliminating verbatim duplicate text)
+- Injected incident window (v4.2 payment gateway 502 surge in days 18-27)
+- Distractor factors and multiple functional categories
+- Controlled missingness and diverse customer identifiers
 """
 
 import os
 import random
-import pandas as pd
 from datetime import datetime, timedelta
+import pandas as pd
 
 random.seed(42)
 
-COMPLAINT_TEMPLATES = [
-    # Payment failures
-    ("Payment failed on checkout with error 502 after v4.2 update.", "payment", "negative", "Mobile App v4.2", "Payment Gateway"),
-    ("Credit card transaction rejected repeatedly on checkout.", "payment", "negative", "Mobile App v4.2", "Payment Gateway"),
-    ("UPI transaction timed out but money was debited from my bank!", "payment", "negative", "Mobile App v4.2", "UPI Gateway"),
-    ("Cannot complete payment, the buy button is unresponsive.", "payment", "negative", "Web Portal v3.1", "Checkout System"),
-    ("Payment went through smoothly, quick checkout experience.", "payment", "positive", "Mobile App v4.1", "Payment Gateway"),
-    ("Checkout was instant with Apple Pay, very convenient.", "payment", "positive", "Mobile App v4.2", "Apple Pay"),
+ERROR_CODES = ["502", "504", "ERR_PAY_GATEWAY", "TIMEOUT_104", "AUTH_FAIL_9"]
+DEVICES = ["iPhone 15", "Pixel 8", "Galaxy S23", "iPad Pro", "Chrome 128", "Safari 17"]
+PAYMENT_METHODS = ["credit card", "debit card", "Apple Pay", "Google Pay", "UPI", "PayPal"]
+AMOUNTS = ["$15.00", "$49.99", "$120.00", "$8.50", "$250.00"]
 
-    # Login and Auth
-    ("App crashes every time I try to log in with Google OAuth.", "login", "negative", "Mobile App v4.2", "Auth Service"),
-    ("Password reset link is broken and sends me to a blank screen.", "login", "negative", "Web Portal v3.1", "Auth Service"),
-    ("FaceID login fails on iOS after the latest update.", "login", "negative", "Mobile App v4.2", "iOS Client"),
-    ("Login was seamless and biometrics worked flawlessly.", "login", "positive", "Mobile App v4.1", "Auth Service"),
+# Template generators with dynamic slots
+def generate_payment_negative():
+    err = random.choice(ERROR_CODES)
+    dev = random.choice(DEVICES)
+    amt = random.choice(AMOUNTS)
+    method = random.choice(PAYMENT_METHODS)
+    templates = [
+        f"Payment of {amt} failed repeatedly on checkout with error {err} right after updating on {dev}.",
+        f"Cannot complete {method} checkout: screen hung and threw {err} gateway timeout.",
+        f"My {method} was charged {amt} but order failed with error {err}. App v4.2 is broken!",
+        f"Payment processing timed out ({err}) at step 3 of checkout on {dev}. Money debited from bank.",
+        f"Checkout button is completely unresponsive when paying {amt} via {method} after the v4.2 update.",
+    ]
+    return random.choice(templates), "payment", "negative", "Mobile App v4.2", "Payment Gateway"
 
-    # Delivery & Shipping
-    ("Package was delivered 4 days late and box was crushed.", "delivery", "negative", "Logistics Partner B", "Delivery Depot"),
-    ("Tracking number shows delivered but package is nowhere to be found.", "delivery", "negative", "Logistics Partner B", "Tracking API"),
-    ("Super fast 1-day delivery, driver was polite and punctual.", "delivery", "positive", "Logistics Partner A", "Delivery Fleet"),
-    ("Package arrived in perfect condition, great tracking updates.", "delivery", "positive", "Logistics Partner A", "Delivery Fleet"),
+def generate_payment_positive():
+    amt = random.choice(AMOUNTS)
+    method = random.choice(PAYMENT_METHODS)
+    templates = [
+        f"Payment of {amt} with {method} went through seamlessly in less than 2 seconds.",
+        f"Checkout was smooth and instant with {method}. Clean purchase experience.",
+        f"Order completed without any friction using {method}, great receipt breakdown.",
+    ]
+    return random.choice(templates), "payment", "positive", "Mobile App v4.1", "Payment Gateway"
 
-    # Customer Support
-    ("Customer support agent hung up after placing me on hold for 40 minutes.", "customer_service", "negative", "Support Desk", "Agent Team"),
-    ("No response to my refund ticket for over two weeks!", "customer_service", "negative", "Support Desk", "Ticketing System"),
-    ("Support rep Sarah resolved my billing question within 5 minutes, fantastic service!", "customer_service", "positive", "Support Desk", "Agent Team"),
-    ("Very helpful live chat agent helped reconfigure my subscription.", "customer_service", "positive", "Support Desk", "Live Chat"),
+def generate_login_negative():
+    dev = random.choice(DEVICES)
+    templates = [
+        f"App crashes instantly on {dev} every time I attempt Google OAuth authentication.",
+        f"Biometric FaceID login fails continuously on {dev} after installing the latest update.",
+        f"Password reset link directs to a blank white screen. Completely locked out of account.",
+        f"Two-factor authentication code is never received via SMS. Cannot access my dashboard.",
+    ]
+    return random.choice(templates), "login", "negative", "Mobile App v4.2", "Auth Service"
 
-    # Performance & Speed
-    ("Dashboard takes 30 seconds to load analytics reports.", "performance", "negative", "Web Portal v3.1", "Database Cluster"),
-    ("High CPU usage and battery drain while app is open in background.", "performance", "negative", "Mobile App v4.2", "Mobile Client"),
-    ("The new platform version is noticeably snappier and loads instantly.", "performance", "positive", "Web Portal v3.1", "Frontend App"),
-]
+def generate_login_positive():
+    dev = random.choice(DEVICES)
+    templates = [
+        f"Biometric login on {dev} works flawlessly. Instant access to my profile.",
+        f"Smooth sign-in flow and Google single sign-on worked on the first attempt.",
+        f"Clean authentication screen, very easy to switch between work profiles.",
+    ]
+    return random.choice(templates), "login", "positive", "Mobile App v4.1", "Auth Service"
 
-start_date = datetime(2026, 8, 1, 9, 0)
-rows = []
+def generate_delivery_negative():
+    days = random.randint(3, 9)
+    templates = [
+        f"Shipment arrived {days} days past the promised delivery window and outer box was badly crushed.",
+        f"Tracking status shows 'Delivered to front porch' but package is missing. Courier unresponsive.",
+        f"Package misrouted to incorrect distribution hub. Delay has exceeded one full week.",
+    ]
+    return random.choice(templates), "delivery", "negative", "Logistics Partner B", "Delivery Depot"
 
-for i in range(500):
-    # Inject temporal surge for payment failures in weeks 3 and 4
-    day_offset = random.randint(0, 27)
-    current_date = start_date + timedelta(days=day_offset, hours=random.randint(0, 23), minutes=random.randint(0, 59))
-    
-    if day_offset >= 18:
-        # High surge of payment failures after "v4.2 update"
-        weights = [0.35, 0.25, 0.20, 0.05, 0.02, 0.03] + [0.01] * (len(COMPLAINT_TEMPLATES) - 6)
-        tmpl = random.choices(COMPLAINT_TEMPLATES, weights=weights, k=1)[0]
-    else:
-        tmpl = random.choice(COMPLAINT_TEMPLATES)
+def generate_delivery_positive():
+    templates = [
+        f"Arrived a day earlier than scheduled. Courteous delivery driver and excellent packaging.",
+        f"Real-time GPS tracking of courier was super accurate. Package delivered in pristine condition.",
+        f"Rapid same-day dispatch and clear status SMS notifications throughout transit.",
+    ]
+    return random.choice(templates), "delivery", "positive", "Logistics Partner A", "Delivery Fleet"
 
-    text, aspect, sentiment, entity, component = tmpl
-    rows.append({
-        "id": f"saas_{i+1:04d}",
-        "text": text,
-        "timestamp": current_date.strftime("%Y-%m-%d %H:%M:%S"),
-        "source": "SaaS Helpdesk & Store Reviews",
-        "sentiment": sentiment,
-        "rating": 1 if sentiment == "negative" else 5,
-        "product": entity,
-        "category": aspect,
-        "component": component,
-        "dataset_type": "DEMO / SYNTHETIC DATA",
-    })
+def generate_support_negative():
+    mins = random.randint(30, 75)
+    templates = [
+        f"Support phone agent placed me on hold for {mins} minutes then disconnected the call abruptly.",
+        f"Submitted billing refund ticket 12 days ago with zero response. Unacceptable customer care.",
+        f"Automated support chatbot is stuck in an unhelpful loop and refuses to connect a human agent.",
+    ]
+    return random.choice(templates), "customer_service", "negative", "Support Desk", "Agent Team"
 
-df = pd.DataFrame(rows)
-os.makedirs("data/samples", exist_ok=True)
-output_path = "data/samples/ecommerce_saas_feedback_demo.csv"
-df.to_csv(output_path, index=False)
-print(f"Generated {len(df)} records in {output_path} (Explicitly tagged DEMO / SYNTHETIC DATA)")
+def generate_support_positive():
+    templates = [
+        f"Support representative resolved my invoice discrepancy within 4 minutes. Outstanding care!",
+        f"Friendly live chat specialist helped walk me through subscription renewal immediately.",
+        f"Help desk was very responsive and credited my account promptly without hassle.",
+    ]
+    return random.choice(templates), "customer_service", "positive", "Support Desk", "Live Chat"
+
+def generate_performance():
+    templates = [
+        ("Dashboard analytics take over 25 seconds to render data tables. Extreme interface lag.", "performance", "negative", "Web Portal v3.1", "Database Cluster"),
+        ("Severe background battery drain and device overheating whenever app v4.2 is open.", "performance", "negative", "Mobile App v4.2", "Mobile Client"),
+        ("The newly optimized web dashboard loads in under 500ms. Noticeably snappier.", "performance", "positive", "Web Portal v3.1", "Frontend App"),
+    ]
+    return random.choice(templates)
+
+
+def generate_dataset(n_samples: int = 500) -> pd.DataFrame:
+    start_date = datetime(2026, 8, 1, 9, 0)
+    rows = []
+
+    # Category generator pools
+    baseline_generators = [
+        (generate_payment_positive, 0.15),
+        (generate_payment_negative, 0.12),
+        (generate_login_positive, 0.12),
+        (generate_login_negative, 0.10),
+        (generate_delivery_positive, 0.15),
+        (generate_delivery_negative, 0.12),
+        (generate_support_positive, 0.12),
+        (generate_support_negative, 0.08),
+        (generate_performance, 0.04),
+    ]
+
+    for i in range(n_samples):
+        # Days 0 to 27 (4 weeks)
+        day_offset = random.randint(0, 27)
+        current_date = start_date + timedelta(
+            days=day_offset,
+            hours=random.randint(0, 23),
+            minutes=random.randint(0, 59),
+            seconds=random.randint(0, 59),
+        )
+
+        # Injected incident: In days 18-27, payment negative complaints surge by >300%
+        if day_offset >= 18:
+            # 60% probability of payment failure during surge window
+            if random.random() < 0.60:
+                gen_fn = generate_payment_negative
+            else:
+                gen_fn = random.choices(
+                    [g[0] for g in baseline_generators],
+                    weights=[g[1] for g in baseline_generators],
+                    k=1
+                )[0]
+        else:
+            gen_fn = random.choices(
+                [g[0] for g in baseline_generators],
+                weights=[g[1] for g in baseline_generators],
+                k=1
+            )[0]
+
+        text, category, sentiment, product, component = gen_fn()
+
+        # Controlled missingness: 2% missing timestamp, 1% missing rating
+        ts_str = current_date.strftime("%Y-%m-%d %H:%M:%S") if random.random() > 0.02 else None
+        rating = (1 if sentiment == "negative" else 5) if random.random() > 0.01 else None
+
+        rows.append({
+            "id": f"saas_{i+1:04d}",
+            "text": text,
+            "timestamp": ts_str,
+            "source": "SaaS Helpdesk & Store Reviews",
+            "sentiment": sentiment,
+            "rating": rating,
+            "product": product,
+            "category": category,
+            "component": component,
+            "dataset_type": "DEMO / SYNTHETIC DATA",
+        })
+
+    df = pd.DataFrame(rows)
+    return df
+
+
+if __name__ == "__main__":
+    df = generate_dataset(500)
+    out_dir = "data/samples"
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, "ecommerce_saas_feedback_demo.csv")
+    df.to_csv(out_path, index=False)
+    unique_texts = df["text"].nunique()
+    print(f"Generated {len(df)} records ({unique_texts} unique text strings) in {out_path}.")
+    print("Dataset explicitly tagged: DEMO / SYNTHETIC DATA")

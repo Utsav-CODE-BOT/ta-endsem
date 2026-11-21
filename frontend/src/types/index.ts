@@ -13,6 +13,8 @@ export interface DashboardSummary {
   top_aspects: Array<{ aspect: string; count: number; percentage: number }>;
   sources: Array<{ source: string; count: number; percentage: number }>;
   date_range: { start: string; end: string };
+  temporal_available?: boolean;
+  topic_diversity?: number;
 }
 
 export interface IssueClusterItem {
@@ -28,6 +30,8 @@ export interface IssueClusterItem {
     positive: number;
   };
   primary_aspect: string;
+  cluster_coherence?: number;
+  coherence_reliable?: boolean;
 }
 
 export interface ExemplarItem {
@@ -58,6 +62,10 @@ export interface EmergingIssueItem {
   recent_volume: number;
   negative_sentiment_ratio: number;
   cluster_coherence: number;
+  coherence_reliable?: boolean;
+  surge_probability?: number;
+  confidence_level?: string;
+  evidence_sufficient?: boolean;
   first_detected_date: string;
   component_breakdown: {
     norm_growth: number;
@@ -83,6 +91,10 @@ export interface RootCauseHypothesisItem {
   confidence: number;
   lift: number;
   pmi: number;
+  npmi?: number;
+  fisher_p_value?: number;
+  adjusted_p_value?: number;
+  is_statistically_significant?: boolean;
   temporal_relationship: string;
   co_occurrence_count: number;
   total_mention_count: number;
@@ -94,6 +106,8 @@ export interface EvidenceItem {
   text: string;
   similarity: number;
   sentiment: string;
+  stance?: 'SUPPORTING' | 'CONTRADICTING' | 'NEUTRAL' | 'UNCERTAIN';
+  factor_verified?: boolean;
   date: string;
   source: string;
 }
@@ -103,12 +117,15 @@ export interface EvidenceResponse {
   supporting: EvidenceItem[];
   contradicting: EvidenceItem[];
   neutral: EvidenceItem[];
+  uncertain?: EvidenceItem[];
   stats: {
     total_qualifying_statements: number;
     supporting_count: number;
     contradicting_count: number;
     neutral_count: number;
+    uncertain_count?: number;
     evidence_balance_ratio: number;
+    factor_verification_rate?: number;
   };
 }
 

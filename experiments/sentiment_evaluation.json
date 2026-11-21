@@ -1,9 +1,32 @@
 {
+  "experiment_name": "RQ2_Sentiment_RoBERTa_Evaluation",
+  "dataset_identifier": "data/samples/airline_sample_1000.csv",
   "n_samples": 120,
+  "execution_timestamp": "2026-11-21 10:17:05 UTC",
   "accuracy": 0.8333,
   "macro_precision": 0.7829,
   "macro_recall": 0.8123,
   "macro_f1": 0.796,
+  "class_metrics": {
+    "negative": {
+      "precision": 0.9275,
+      "recall": 0.8649,
+      "f1_score": 0.8951,
+      "support": 74
+    },
+    "neutral": {
+      "precision": 0.6296,
+      "recall": 0.7083,
+      "f1_score": 0.6667,
+      "support": 24
+    },
+    "positive": {
+      "precision": 0.7917,
+      "recall": 0.8636,
+      "f1_score": 0.8261,
+      "support": 22
+    }
+  },
   "confusion_matrix": {
     "negative": {
       "negative": 64,

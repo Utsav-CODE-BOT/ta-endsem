@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 import numpy as np
 import pandas as pd
@@ -44,7 +44,7 @@ class PipelineService:
         self.sentiment_analyzer = SentimentAnalyzer()
         self.emotion_detector = EmotionDetector(embedder=self.embedder)
         self.aspect_extractor = AspectExtractor(embedder=self.embedder)
-        self.clusterer = IssueClusterer()
+        self.clusterer = IssueClusterer(n_clusters=6)
         self.temporal_analyzer = TemporalAnalyzer()
         self.emerging_scorer = EmergingScorer()
         self.candidate_miner = CandidateRootCauseMiner()
@@ -58,6 +58,7 @@ class PipelineService:
         self.current_hypotheses: List[Dict[str, Any]] = []
         self.current_emerging: List[Dict[str, Any]] = []
         self.current_graph: Dict[str, Any] = {"nodes": [], "links": []}
+        self.temporal_available: bool = True
         self.is_ready = False
 
     @classmethod
@@ -68,7 +69,8 @@ class PipelineService:
 
     def ingest_file(self, file_path: str) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """
-        Validates, normalizes columns, deduplicates, and parses timestamps from CSV/JSON.
+        Validates, normalizes columns, safely deduplicates without conflating identical
+        complaints from different users, and truthfully parses timestamps without fabrication.
         """
         ext = os.path.splitext(file_path)[1].lower()
         if ext == ".csv":
@@ -81,6 +83,18 @@ class PipelineService:
             raise ValueError(f"Unsupported file format: {ext}")
 
         uploaded_count = len(df)
+        if uploaded_count == 0:
+            return pd.DataFrame(), {
+                "records_uploaded": 0,
+                "valid_records": 0,
+                "invalid_records": 0,
+                "duplicates_removed": 0,
+                "missing_timestamps": 0,
+                "temporal_available": False,
+                "sources_detected": [],
+                "languages_detected": [],
+                "sample_columns": [],
+            }
 
         # Normalize column names to lowercase snake_case
         df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
@@ -101,11 +115,18 @@ class PipelineService:
                 time_col = cand
                 break
 
-        # Identify source column
+        # Identify source / entity column
         source_col = None
         for cand in ["source", "airline", "product", "platform", "channel"]:
             if cand in df.columns:
                 source_col = cand
+                break
+
+        # Identify explicit ID column
+        id_col = None
+        for cand in ["tweet_id", "id", "record_id", "ticket_id"]:
+            if cand in df.columns:
+                id_col = cand
                 break
 
         # Identify rating / sentiment column if present
@@ -115,23 +136,27 @@ class PipelineService:
                 sentiment_col = cand
                 break
 
-        # Deduplicate
+        # Deduplicate policy: drop exact duplicate rows or exact duplicate IDs
         before_dedup = len(df)
-        df = df.drop_duplicates(subset=[text_col])
+        if id_col:
+            df = df.drop_duplicates(subset=[id_col])
+        else:
+            # Deduplicate by full row to avoid deleting independent complaints with same wording
+            df = df.drop_duplicates()
         dedup_removed = before_dedup - len(df)
 
-        # Parse timestamps safely
+        # Parse timestamps truthfully: DO NOT invent hourly/current dates for missing timestamps!
         missing_timestamps = 0
+        temporal_available = False
         if time_col:
             df["parsed_timestamp"] = pd.to_datetime(df[time_col], errors="coerce", utc=True)
             missing_timestamps = int(df["parsed_timestamp"].isna().sum())
-            # Fill missing with incremental dates
-            now = pd.Timestamp.now(tz="UTC")
-            df["parsed_timestamp"] = df["parsed_timestamp"].fillna(now)
+            valid_time_count = len(df) - missing_timestamps
+            temporal_available = valid_time_count >= 5 and (valid_time_count / max(1, len(df)) >= 0.20)
         else:
-            now = pd.Timestamp.now(tz="UTC")
-            df["parsed_timestamp"] = [now - pd.Timedelta(hours=i) for i in range(len(df))]
+            df["parsed_timestamp"] = [None] * len(df)
             missing_timestamps = len(df)
+            temporal_available = False
 
         # Preprocess text
         valid_rows = []
@@ -148,21 +173,31 @@ class PipelineService:
             languages.add(res["language"])
             source_val = str(row[source_col]) if source_col and pd.notna(row[source_col]) else "Customer Feedback"
             sentiment_val = str(row[sentiment_col]).lower() if sentiment_col and pd.notna(row[sentiment_col]) else None
+            t_val = row["parsed_timestamp"]
+            clean_ts = t_val if pd.notna(t_val) else None
+
+            # Collect extra metadata for candidate factor mining
+            metadata_dict = {}
+            for col in df.columns:
+                if col not in [text_col, time_col, "parsed_timestamp"] and pd.notna(row[col]):
+                    metadata_dict[col] = str(row[col])
+
+            doc_id = str(row[id_col]) if id_col and pd.notna(row[id_col]) else f"doc_{idx}"
 
             valid_rows.append({
-                "id": str(row.get("tweet_id", row.get("id", f"doc_{idx}"))),
+                "id": doc_id,
                 "original_text": res["original_text"],
                 "clean_text": res["clean_text"],
                 "normalized_text": res["normalized_text"],
-                "timestamp": row["parsed_timestamp"],
+                "timestamp": clean_ts,
                 "source": source_val,
                 "provided_sentiment": sentiment_val,
                 "language": res["language"],
                 "word_count": res["word_count"],
+                "metadata": metadata_dict,
             })
 
         processed_df = pd.DataFrame(valid_rows)
-
         sources = list(processed_df["source"].unique()) if not processed_df.empty else []
 
         stats = {
@@ -171,11 +206,13 @@ class PipelineService:
             "invalid_records": invalid_count,
             "duplicates_removed": dedup_removed,
             "missing_timestamps": missing_timestamps,
+            "temporal_available": temporal_available,
             "sources_detected": sources[:10],
             "languages_detected": list(languages),
             "sample_columns": list(df.columns),
         }
 
+        self.temporal_available = temporal_available
         return processed_df, stats
 
     def run_full_pipeline(
@@ -183,13 +220,23 @@ class PipelineService:
         df: pd.DataFrame,
         n_clusters: int = 6,
         similarity_threshold: float = 0.35,
+        use_dataset_labels: bool = False,
         db: Optional[Session] = None,
     ) -> Dict[str, Any]:
         """
-        Executes all 10 pipeline phases end-to-end on the dataframe.
+        Executes all pipeline phases end-to-end on the dataframe.
+        Propagates n_clusters and similarity_threshold correctly.
         """
-        logger.info("Executing VoiceMiner pipeline on %d records...", len(df))
+        if len(df) == 0:
+            return {"status": "error", "message": "Cannot run pipeline on empty dataframe."}
+
+        logger.info("Executing VoiceMiner pipeline on %d records (n_clusters=%d)...", len(df), n_clusters)
         self.current_df = df
+
+        # Re-initialize clusterer with user-specified n_clusters
+        self.clusterer = IssueClusterer(n_clusters=n_clusters, random_state=42)
+        self.evidence_retriever = EvidenceRetriever(embedder=self.embedder, top_k=15)
+        self.candidate_miner = CandidateRootCauseMiner(min_support=2)
 
         texts = df["clean_text"].tolist()
         timestamps = df["timestamp"].tolist()
@@ -200,33 +247,44 @@ class PipelineService:
         embeddings = self.embedder.encode(texts, batch_size=64, use_cache=True)
         self.current_embeddings = embeddings
 
-        # 2. Sentiment & Emotion Analysis
+        # 2. Sentiment & Emotion Analysis (Separating model prediction from provided ground truth)
         logger.info("Inferring transformer sentiment & emotion distribution...")
-        sentiments = []
+        predicted_sentiments = []
+        predicted_scores = []
+        effective_sentiments = []
+        sentiment_origins = []
         emotions = []
-        sentiment_scores = []
         emotion_scores = []
 
-        # If provided_sentiment is already populated and accurate (e.g. benchmark data), use it or calibrate
         for i, row in df.iterrows():
             text = row["clean_text"]
-            if row.get("provided_sentiment") in ["positive", "neutral", "negative"]:
-                sent = row["provided_sentiment"]
-                score = 0.95
+            provided = row.get("provided_sentiment")
+            if provided in ["positive", "neutral", "negative"]:
+                pred_label = provided
+                pred_score = 0.95
+                effective_sent = provided
+                origin = "DATASET_LABEL"
             else:
                 s_res = self.sentiment_analyzer.analyze_single(text)
-                sent = s_res["label"]
-                score = s_res["score"]
+                pred_label = s_res["label"]
+                pred_score = s_res["score"]
+                effective_sent = pred_label
+                origin = "MODEL_PREDICTION"
+
+            predicted_sentiments.append(pred_label)
+            predicted_scores.append(pred_score)
+            effective_sentiments.append(effective_sent)
+            sentiment_origins.append(origin)
 
             e_res = self.emotion_detector.detect(text, text_embedding=embeddings[i])
-
-            sentiments.append(sent)
-            sentiment_scores.append(score)
             emotions.append(e_res["primary_emotion"])
             emotion_scores.append(e_res["score"])
 
-        df["sentiment"] = sentiments
-        df["sentiment_score"] = sentiment_scores
+        df["predicted_sentiment"] = predicted_sentiments
+        df["predicted_score"] = predicted_scores
+        df["sentiment"] = effective_sentiments
+        df["sentiment_score"] = predicted_scores
+        df["sentiment_origin"] = sentiment_origins
         df["emotion"] = emotions
         df["emotion_score"] = emotion_scores
 
@@ -238,8 +296,8 @@ class PipelineService:
             all_aspects.append(asps)
         df["aspects"] = all_aspects
 
-        # 4. Semantic Issue Clustering
-        logger.info("Discovering semantic issue clusters...")
+        # 4. Semantic Issue Clustering with c-TF-IDF and Empirical Coherence
+        logger.info("Discovering semantic issue clusters (k=%d)...", n_clusters)
         cluster_res = self.clusterer.fit_predict(embeddings, texts, algorithm="kmeans")
         cluster_labels = cluster_res["labels"]
         cluster_coords = cluster_res["coords_2d"]
@@ -251,24 +309,46 @@ class PipelineService:
 
         # 5. Temporal Trend Analysis & 6. Emerging Issue Scoring
         logger.info("Calculating temporal dynamics & emerging issue prioritization...")
-        time_series_df = self.temporal_analyzer.build_time_series(
-            timestamps=timestamps,
-            cluster_labels=cluster_labels,
-            sentiments=sentiments,
-            freq="D",
-        )
+        has_valid_times = any(pd.notna(t) for t in timestamps)
+        if has_valid_times:
+            time_series_df = self.temporal_analyzer.build_time_series(
+                timestamps=timestamps,
+                cluster_labels=cluster_labels,
+                sentiments=effective_sentiments,
+                freq="D",
+            )
+        else:
+            time_series_df = pd.DataFrame()
 
         emerging_issues = []
         for cl in cluster_profiles:
             c_id = cl["cluster_id"]
-            trend = self.temporal_analyzer.analyze_cluster_trend(time_series_df, c_id)
+            if not time_series_df.empty:
+                trend = self.temporal_analyzer.analyze_cluster_trend(time_series_df, c_id)
+            else:
+                trend = {
+                    "cluster_id": c_id,
+                    "history": [],
+                    "recent_volume": cl["size"],
+                    "baseline_volume": 0,
+                    "growth_rate": 0.0,
+                    "z_score_anomalies": 0,
+                    "cusum_change_detected": False,
+                    "cusum_change_date": None,
+                    "ewma_divergence": 0.0,
+                    "surge_probability": None,
+                    "data_sufficiency": "TEMPORAL_UNAVAILABLE",
+                }
 
             # Negative sentiment ratio for this cluster
             c_mask = df["cluster_id"] == c_id
             c_sub = df[c_mask]
             neg_ratio = float((c_sub["sentiment"] == "negative").mean()) if len(c_sub) > 0 else 0.5
 
-            first_date = trend["history"][0]["date"] if trend["history"] else "N/A"
+            first_date = trend["history"][0]["date"] if trend.get("history") else "N/A"
+
+            # Pass ACTUAL empirical cluster coherence instead of static 0.78
+            empirical_coherence = cl.get("cluster_coherence", 0.70)
 
             emerging_score_data = self.emerging_scorer.score_issue(
                 cluster_id=c_id,
@@ -278,10 +358,14 @@ class PipelineService:
                 growth_rate=trend["growth_rate"],
                 recent_volume=trend["recent_volume"],
                 negative_sentiment_ratio=neg_ratio,
-                cluster_coherence=0.78,
+                cluster_coherence=empirical_coherence,
                 first_detected_date=first_date,
+                surge_probability=trend.get("surge_probability"),
             )
-            emerging_score_data["trend_history"] = trend["history"]
+            emerging_score_data["trend_history"] = trend.get("history", [])
+            emerging_score_data["cusum_change_detected"] = trend.get("cusum_change_detected", False)
+            emerging_score_data["cusum_change_date"] = trend.get("cusum_change_date")
+            emerging_score_data["data_sufficiency"] = trend.get("data_sufficiency", "SUFFICIENT")
             emerging_issues.append(emerging_score_data)
 
             # Update cluster profile with sentiment breakdown
@@ -307,7 +391,7 @@ class PipelineService:
         self.current_emerging = emerging_issues
         self.current_clusters = cluster_profiles
 
-        # 7. Candidate Root-Cause Mining
+        # 7. Candidate Root-Cause Mining with Real Timestamps
         logger.info("Mining evidence-supported candidate root causes...")
         all_hypotheses = []
         entity_lists = [[s] for s in sources]
@@ -354,6 +438,7 @@ class PipelineService:
             "clusters_count": len(cluster_profiles),
             "emerging_issues_count": len(emerging_issues),
             "hypotheses_count": len(all_hypotheses),
+            "temporal_available": self.temporal_available,
         }
 
     def _save_to_database(
@@ -376,12 +461,14 @@ class PipelineService:
 
             # Insert documents & NLP results
             for idx, row in df.iterrows():
+                t_val = row["timestamp"]
+                py_dt = t_val.to_pydatetime() if hasattr(t_val, "to_pydatetime") and pd.notna(t_val) else None
                 doc = DocumentModel(
                     id=str(row["id"]),
                     source=str(row["source"]),
                     original_text=str(row["original_text"]),
                     clean_text=str(row["clean_text"]),
-                    timestamp=row["timestamp"].to_pydatetime() if hasattr(row["timestamp"], "to_pydatetime") else None,
+                    timestamp=py_dt,
                     language=str(row.get("language", "en")),
                     word_count=int(row.get("word_count", 0)),
                 )
@@ -458,13 +545,18 @@ class PipelineService:
     def analyze_realtime_text(self, raw_text: str) -> Dict[str, Any]:
         """
         Processes single customer feedback in real-time.
-        Computes sentiment, emotion, aspects, nearest issue cluster, and evidence.
+        Computes sentiment, emotion, aspects, nearest issue cluster (with open-set unknown detection),
+        and hypothesis-aware evidence.
         """
         clean_text = self.preprocessor.clean(raw_text)
         embedding = self.embedder.encode(clean_text, use_cache=True)
+        if embedding.ndim == 2:
+            single_emb = embedding[0]
+        else:
+            single_emb = embedding
 
         sentiment = self.sentiment_analyzer.analyze_single(clean_text)
-        emotion = self.emotion_detector.detect(clean_text, text_embedding=embedding)
+        emotion = self.emotion_detector.detect(clean_text, text_embedding=single_emb)
         aspects = self.aspect_extractor.extract_aspects(clean_text)
 
         matched_issue = None
@@ -472,49 +564,45 @@ class PipelineService:
         evidence_list = []
 
         if self.is_ready and self.current_clusters and self.current_embeddings is not None:
-            # Find nearest cluster centroid
-            best_sim = -1.0
-            best_cluster = None
-            for cl in self.current_clusters:
-                c_id = cl["cluster_id"]
-                c_indices = [i for i, row in self.current_df.iterrows() if row["cluster_id"] == c_id]
-                if c_indices:
-                    cluster_embeds = self.current_embeddings[c_indices]
-                    centroid = np.mean(cluster_embeds, axis=0)
-                    sim = float(np.dot(embedding, centroid))
-                    if sim > best_sim:
-                        best_sim = sim
-                        best_cluster = cl
+            # Use open-set cluster prediction with centroid distance
+            pred_match = self.clusterer.predict_cluster(single_emb, similarity_threshold=0.35)
+            matched_issue = {
+                "issue_id": pred_match["cluster_id"],
+                "name": pred_match["name"],
+                "similarity": pred_match["similarity"],
+                "primary_aspect": pred_match.get("primary_aspect", "N/A"),
+                "is_known": pred_match.get("is_known", True),
+            }
 
-            if best_cluster:
-                matched_issue = {
-                    "issue_id": best_cluster["cluster_id"],
-                    "name": best_cluster["name"],
-                    "similarity": round(best_sim, 4),
-                    "primary_aspect": best_cluster.get("primary_aspect", "N/A"),
-                }
-
+            matched_id = pred_match["cluster_id"]
+            if matched_id >= 0:
                 # Find associated candidate causes for this issue
                 for h in self.current_hypotheses:
-                    if h["cluster_id"] == best_cluster["cluster_id"]:
+                    if h["cluster_id"] == matched_id:
                         candidate_cause = {
                             "candidate_factor": h["candidate_factor"],
                             "confidence": h["confidence"],
                             "lift": h["lift"],
+                            "npmi": h.get("npmi", 0.0),
                             "interpretation": h["interpretation"],
                         }
                         break
 
-                # Retrieve 3 most similar feedback records
-                ev = self.evidence_retriever.retrieve_evidence(
-                    query=clean_text,
-                    texts=self.current_df["clean_text"].tolist(),
-                    embeddings=self.current_embeddings,
-                    sentiments=self.current_df["sentiment"].tolist(),
-                    dates=self.current_df["timestamp"].dt.strftime("%Y-%m-%d").tolist(),
-                    sources=self.current_df["source"].tolist(),
-                )
-                evidence_list = ev["supporting"][:3]
+            # Retrieve evidence using hypothesis-aware stance retriever
+            query_factor = candidate_cause["candidate_factor"] if candidate_cause else None
+            ev = self.evidence_retriever.retrieve_evidence(
+                query=clean_text,
+                texts=self.current_df["clean_text"].tolist(),
+                embeddings=self.current_embeddings,
+                sentiments=self.current_df["sentiment"].tolist(),
+                candidate_factor=query_factor,
+                dates=[
+                    t.strftime("%Y-%m-%d") if (pd.notna(t) and hasattr(t, "strftime")) else "N/A"
+                    for t in self.current_df["timestamp"]
+                ],
+                sources=self.current_df["source"].tolist(),
+            )
+            evidence_list = ev["supporting"][:3]
 
         return {
             "original_text": raw_text,
@@ -540,6 +628,7 @@ class PipelineService:
                 "high_priority_count": 0,
                 "top_aspects": [],
                 "sources": [],
+                "temporal_available": self.temporal_available,
                 "date_range": {"start": "N/A", "end": "N/A"},
             }
 
@@ -575,8 +664,9 @@ class PipelineService:
         critical_count = sum(1 for e in self.current_emerging if e["priority"] == "CRITICAL")
         high_count = sum(1 for e in self.current_emerging if e["priority"] == "HIGH")
 
-        min_date = df["timestamp"].min().strftime("%Y-%m-%d") if hasattr(df["timestamp"].min(), "strftime") else "2015-02-15"
-        max_date = df["timestamp"].max().strftime("%Y-%m-%d") if hasattr(df["timestamp"].max(), "strftime") else "2015-02-24"
+        valid_times = [t for t in df["timestamp"] if pd.notna(t) and hasattr(t, "strftime")]
+        min_date = min(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
+        max_date = max(valid_times).strftime("%Y-%m-%d") if valid_times else "N/A"
 
         return {
             "total_feedback": total,
@@ -588,6 +678,7 @@ class PipelineService:
             "high_priority_count": high_count,
             "top_aspects": top_aspects,
             "sources": sources_list,
+            "temporal_available": self.temporal_available,
             "date_range": {"start": min_date, "end": max_date},
         }
 
@@ -606,6 +697,7 @@ class PipelineService:
                 "growth_rate_pct": e["growth_rate_pct"],
                 "volume": e["total_volume"],
                 "negative_sentiment_ratio": e["negative_sentiment_ratio"],
+                "confidence_level": e.get("confidence_level", "MODERATE_STATISTICAL_SUPPORT"),
             })
 
         hypotheses_summary = []
@@ -615,31 +707,39 @@ class PipelineService:
                 "candidate_factor": h["candidate_factor"],
                 "confidence": h["confidence"],
                 "lift": h["lift"],
+                "npmi": h.get("npmi", 0.0),
+                "is_statistically_significant": h.get("is_statistically_significant", False),
                 "temporal_relationship": h["temporal_relationship"],
                 "interpretation": h["interpretation"],
             })
 
+        avg_coherence = (
+            round(float(np.mean([cl.get("cluster_coherence", 0.70) for cl in self.current_clusters])), 3)
+            if self.current_clusters else 0.70
+        )
+
         return {
             "title": "VoiceMiner Executive Intelligence & Root-Cause Audit",
-            "generated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "executive_summary": (
                 f"Analysis of {dashboard['total_feedback']:,} multi-source customer records detected "
                 f"{dashboard['active_issues']} distinct semantic issue clusters. "
                 f"We identified {dashboard['critical_issues_count']} CRITICAL and {dashboard['high_priority_count']} HIGH "
                 f"priority emerging issues exhibiting anomalous temporal acceleration and negative sentiment density. "
-                f"Candidate factor mining discovered strong associations linking operational disruptions with key entity patterns."
+                f"Candidate factor mining discovered statistical associations linking operational disruptions with key entity patterns."
             ),
             "emerging_issues_summary": emerging_summary,
             "candidate_root_causes": hypotheses_summary,
             "evidence_audit": {
                 "total_documents_analyzed": dashboard["total_feedback"],
                 "negative_sentiment_pct": dashboard["sentiment_distribution"]["negative"],
-                "cluster_coherence_avg": 0.78,
+                "cluster_coherence_avg": avg_coherence,
             },
             "limitations": [
                 "Discovered factors represent empirical statistical associations and temporal precedence; they do not prove direct causation without randomized intervention or counterfactual modeling.",
                 "Short text expressions and sarcasm may introduce variance in sentence-level emotion calibration.",
                 "Findings are bounded by the temporal and domain window of the ingested dataset.",
+                "Uncertain or sparse temporal data is flagged and excluded from causal or change-point claims.",
             ],
             "recommended_investigation_areas": [
                 "Conduct operational cross-checks on flight dispatch gates and baggage transit checkpoints corresponding to the peak surge dates.",

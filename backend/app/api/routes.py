@@ -1,5 +1,7 @@
 import os
+import re
 import json
+import uuid
 import logging
 from typing import Dict, List, Optional, Any
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
@@ -25,6 +27,9 @@ from backend.app.services.pipeline_service import PipelineService
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+ALLOWED_EXTENSIONS = {".csv", ".json", ".jsonl", ".xlsx", ".xls"}
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB limit
+
 
 @router.post("/data/upload", response_model=IngestionStats)
 async def upload_dataset(
@@ -32,17 +37,40 @@ async def upload_dataset(
     db: Session = Depends(get_db),
 ):
     """
-    Ingests and validates uploaded CSV/JSON customer feedback files.
+    Ingests and validates uploaded CSV/JSON customer feedback files with strict
+    filename sanitization, size limits, and path-traversal prevention.
     """
-    service = PipelineService.get_instance()
-    upload_dir = "data/raw"
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Missing file name.")
+
+    # 1. Extension validation
+    raw_ext = os.path.splitext(file.filename)[1].lower()
+    if raw_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file extension '{raw_ext}'. Supported formats: {sorted(list(ALLOWED_EXTENSIONS))}"
+        )
+
+    # 2. Safe server-generated filename preventing directory traversal
+    base_name = re.sub(r"[^a-zA-Z0-9_\.-]", "_", os.path.basename(file.filename))
+    safe_filename = f"upload_{uuid.uuid4().hex[:10]}_{base_name}"
+    upload_dir = os.path.abspath("data/raw")
     os.makedirs(upload_dir, exist_ok=True)
-    temp_path = os.path.join(upload_dir, file.filename)
+
+    temp_path = os.path.abspath(os.path.join(upload_dir, safe_filename))
+    # Directory containment validation
+    if not temp_path.startswith(upload_dir):
+        raise HTTPException(status_code=400, detail="Invalid file path detected.")
+
+    # 3. Read content with size limit enforcement
+    content = await file.read(MAX_FILE_SIZE + 1)
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=413, detail="File size exceeds maximum allowed limit (50 MB).")
 
     with open(temp_path, "wb") as f:
-        content = await file.read()
         f.write(content)
 
+    service = PipelineService.get_instance()
     try:
         processed_df, stats = service.ingest_file(temp_path)
         # Trigger pipeline analysis on uploaded dataset
@@ -50,6 +78,12 @@ async def upload_dataset(
         return IngestionStats(**stats)
     except Exception as e:
         logger.error("Dataset upload/processing error: %s", e)
+        # Clean up failed upload file if possible
+        if os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
         raise HTTPException(status_code=400, detail=f"Failed to process dataset: {str(e)}")
 
 
@@ -59,13 +93,15 @@ def trigger_analysis(
     db: Session = Depends(get_db),
 ):
     """
-    Triggers analysis on an existing sample dataset (e.g. airline benchmark or SaaS demo).
+    Triggers analysis on an existing sample dataset with user-configured n_clusters
+    and similarity threshold correctly propagated.
     """
     service = PipelineService.get_instance()
-    sample_path = os.path.join("data/samples", req.dataset_name)
+    safe_name = os.path.basename(req.dataset_name)
+    sample_path = os.path.join("data/samples", safe_name)
 
     if not os.path.exists(sample_path):
-        sample_path = os.path.join("data/raw", req.dataset_name)
+        sample_path = os.path.join("data/raw", safe_name)
     if not os.path.exists(sample_path):
         raise HTTPException(status_code=404, detail=f"Dataset {req.dataset_name} not found.")
 
@@ -109,6 +145,8 @@ def list_issues():
             center_2d=cl["center_2d"],
             sentiment_distribution=cl.get("sentiment_distribution", {"negative": 60.0, "neutral": 25.0, "positive": 15.0}),
             primary_aspect=cl.get("primary_aspect", "GENERAL"),
+            cluster_coherence=cl.get("cluster_coherence"),
+            coherence_reliable=cl.get("coherence_reliable"),
         ))
     return items
 
@@ -121,7 +159,6 @@ def get_issue_detail(issue_id: int):
     service = PipelineService.get_instance()
     for cl in service.current_clusters:
         if cl["cluster_id"] == issue_id:
-            # Match metrics
             matched_metrics = None
             for em in service.current_emerging:
                 if em["cluster_id"] == issue_id:
@@ -138,6 +175,8 @@ def get_issue_detail(issue_id: int):
                 center_2d=cl["center_2d"],
                 exemplars=cl.get("exemplars", []),
                 metrics=matched_metrics,
+                cluster_coherence=cl.get("cluster_coherence"),
+                coherence_reliable=cl.get("coherence_reliable"),
             )
 
     raise HTTPException(status_code=404, detail="Issue cluster not found.")
@@ -155,7 +194,7 @@ def list_emerging_issues():
 @router.get("/issues/{issue_id}/root-causes", response_model=List[RootCauseHypothesisItem])
 def get_issue_root_causes(issue_id: int):
     """
-    Returns candidate root causes, Lift, PMI, and confidence for a given issue.
+    Returns candidate root causes, Lift, PMI, NPMI, and association strength for a given issue.
     """
     service = PipelineService.get_instance()
     results = []
@@ -170,6 +209,11 @@ def get_issue_root_causes(issue_id: int):
                 confidence=h["confidence"],
                 lift=h["lift"],
                 pmi=h["pmi"],
+                npmi=h.get("npmi", 0.0),
+                fisher_p_value=h.get("fisher_p_value"),
+                adjusted_p_value=h.get("adjusted_p_value"),
+                is_statistically_significant=h.get("is_statistically_significant", False),
+                association_strength_score=h.get("association_strength_score", h["confidence"]),
                 temporal_relationship=h["temporal_relationship"],
                 co_occurrence_count=h["co_occurrence_count"],
                 total_mention_count=h["total_mention_count"],
@@ -183,29 +227,42 @@ def get_issue_root_causes(issue_id: int):
 def get_issue_evidence(
     issue_id: int,
     query: Optional[str] = None,
+    candidate_factor: Optional[str] = None,
 ):
     """
-    Retrieves supporting, contradictory, and neutral customer feedback evidence for an issue.
+    Retrieves supporting, contradictory, neutral, and uncertain evidence for an issue hypothesis.
     """
     service = PipelineService.get_instance()
     if not service.is_ready or service.current_df is None:
         raise HTTPException(status_code=400, detail="Pipeline data not initialized.")
 
-    # Find issue name
     issue_name = f"Issue Cluster {issue_id}"
     for cl in service.current_clusters:
         if cl["cluster_id"] == issue_id:
             issue_name = cl["name"]
             break
 
-    search_query = query if query else f"{issue_name} problem complaint failure"
+    target_factor = candidate_factor
+    if not target_factor:
+        for h in service.current_hypotheses:
+            if h["cluster_id"] == issue_id:
+                target_factor = h["candidate_factor"]
+                break
+
+    search_query = query if query else (f"{target_factor} {issue_name}" if target_factor else issue_name)
+
+    dates_list = [
+        t.strftime("%Y-%m-%d") if (pd.notna(t) and hasattr(t, "strftime")) else "N/A"
+        for t in service.current_df["timestamp"]
+    ]
 
     evidence = service.evidence_retriever.retrieve_evidence(
         query=search_query,
         texts=service.current_df["clean_text"].tolist(),
         embeddings=service.current_embeddings,
         sentiments=service.current_df["sentiment"].tolist(),
-        dates=service.current_df["timestamp"].dt.strftime("%Y-%m-%d").tolist(),
+        candidate_factor=target_factor,
+        dates=dates_list,
         sources=service.current_df["source"].tolist(),
     )
 
@@ -241,14 +298,18 @@ def get_analytics_trends():
         return []
 
     df = service.current_df
-    df_copy = df.copy()
-    df_copy["date"] = df_copy["timestamp"].dt.strftime("%Y-%m-%d")
+    valid_mask = df["timestamp"].notna()
+    if not valid_mask.any():
+        return []
 
-    grouped = df_copy.groupby("date").agg(
+    df_valid = df[valid_mask].copy()
+    df_valid["date"] = df_valid["timestamp"].dt.strftime("%Y-%m-%d")
+
+    grouped = df_valid.groupby("date").agg(
         total_volume=("id", "count"),
-        negative_volume=("sentiment", lambda s: (s == "negative").sum()),
-        positive_volume=("sentiment", lambda s: (s == "positive").sum()),
-        neutral_volume=("sentiment", lambda s: (s == "neutral").sum()),
+        negative_volume=("sentiment", lambda s: int((s == "negative").sum())),
+        positive_volume=("sentiment", lambda s: int((s == "positive").sum())),
+        neutral_volume=("sentiment", lambda s: int((s == "neutral").sum())),
     ).reset_index().sort_values("date")
 
     return grouped.to_dict(orient="records")

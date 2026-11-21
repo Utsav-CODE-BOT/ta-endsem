@@ -1,12 +1,19 @@
 import os
 import json
 import logging
-from typing import Dict, List, Optional
+from datetime import datetime, timezone
+from typing import Dict, List, Optional, Any
 import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score, accuracy_score, precision_recall_fscore_support
+from sklearn.metrics import (
+    silhouette_score,
+    davies_bouldin_score,
+    calinski_harabasz_score,
+    accuracy_score,
+    precision_recall_fscore_support,
+)
 
 from ml.preprocessing.text_cleaner import TextPreprocessor
 from ml.embeddings.sentence_embedder import SentenceEmbedder
@@ -18,6 +25,7 @@ logger = logging.getLogger(__name__)
 class BenchmarkRunner:
     """
     Executes empirical evaluations across baselines and proposed architectures to answer RQ1-RQ5.
+    Records complete provenance metadata (sample counts, hashes, parameters, random seeds).
     Saves metrics, runtime, and comparison tables to `experiments/`.
     """
 
@@ -32,15 +40,20 @@ class BenchmarkRunner:
         texts: List[str],
         n_clusters: int = 6,
         random_state: int = 42,
-    ) -> Dict[str, any]:
+        dataset_name: str = "data/samples/airline_sample_1000.csv",
+    ) -> Dict[str, Any]:
         """
         RQ1: Compares:
-        1. Baseline 1: TF-IDF + K-Means
+        1. Baseline 1: TF-IDF (1500d) + K-Means
         2. Baseline 2: Sentence-BERT (raw 384d) + K-Means
-        3. Proposed: Sentence-BERT + Dimensionality Reduction (10d) + K-Means / c-TF-IDF
+        3. Proposed: Sentence-BERT + TruncatedSVD (10d) + K-Means / c-TF-IDF
+        Also reports Topic Diversity and Dimensionality Ablation.
         """
+        raw_count = len(texts)
         clean_texts = [self.preprocessor.clean(t) for t in texts]
         non_empty = [t for t in clean_texts if len(t.split()) >= 3]
+        post_count = len(non_empty)
+        removed_count = raw_count - post_count
 
         # 1. Baseline 1: TF-IDF + K-Means
         tfidf_vec = TfidfVectorizer(max_features=1500, stop_words="english")
@@ -61,14 +74,32 @@ class BenchmarkRunner:
         db_b2 = float(davies_bouldin_score(embeddings, labels_b2))
         ch_b2 = float(calinski_harabasz_score(embeddings, labels_b2))
 
-        # 3. Proposed: SBERT + TruncatedSVD reduction + K-Means / c-TF-IDF
+        # 3. Proposed: SBERT + TruncatedSVD reduction (10d) + K-Means / c-TF-IDF
         clusterer = IssueClusterer(n_clusters=n_clusters, reduction_dims=10, random_state=random_state)
         res_proposed = clusterer.fit_predict(embeddings, non_empty, algorithm="kmeans")
         metrics_proposed = res_proposed["metrics"]
 
+        # 4. Dimensionality Comparison (Phase 5.3)
+        dims_benchmark = {}
+        for d in [5, 10, 25, 50]:
+            if embeddings.shape[1] > d:
+                c_test = IssueClusterer(n_clusters=n_clusters, reduction_dims=d, random_state=random_state)
+                res_d = c_test.fit_predict(embeddings, non_empty, algorithm="kmeans")
+                dims_benchmark[f"{d}_dimensions"] = {
+                    "reduction_dims": d,
+                    "silhouette_score": res_d["metrics"]["silhouette_score"],
+                    "davies_bouldin_index": res_d["metrics"]["davies_bouldin_index"],
+                }
+
         results = {
-            "n_samples": len(non_empty),
+            "experiment_name": "RQ1_Clustering_Representation_Benchmark",
+            "dataset_identifier": dataset_name,
+            "input_sample_size": raw_count,
+            "post_filtering_sample_size": post_count,
+            "removed_records_count": removed_count,
             "n_clusters": n_clusters,
+            "random_seed": random_state,
+            "execution_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "baselines": {
                 "baseline_1_tfidf_kmeans": {
                     "method": "TF-IDF (1500d) + K-Means",
@@ -87,8 +118,10 @@ class BenchmarkRunner:
                     "silhouette_score": metrics_proposed.get("silhouette_score"),
                     "davies_bouldin_index": metrics_proposed.get("davies_bouldin_index"),
                     "calinski_harabasz_index": metrics_proposed.get("calinski_harabasz_index"),
+                    "topic_diversity": metrics_proposed.get("topic_diversity"),
                 },
             },
+            "dimensionality_ablation": dims_benchmark,
         }
 
         # Save to experiments directory
@@ -102,10 +135,12 @@ class BenchmarkRunner:
         self,
         texts: List[str],
         ground_truth: List[str],
-    ) -> Dict[str, any]:
+        dataset_name: str = "data/samples/airline_sample_1000.csv",
+    ) -> Dict[str, Any]:
         """
         Evaluates Twitter-RoBERTa transformer against true labels.
-        Reports accuracy, precision, recall, macro-F1, and confusion matrix.
+        Validates confusion matrix completeness and reports precision, recall,
+        macro-F1, class support, and accuracy.
         """
         from ml.sentiment.sentiment_analyzer import SentimentAnalyzer
         analyzer = SentimentAnalyzer()
@@ -118,10 +153,16 @@ class BenchmarkRunner:
         y_true = [label_map.get(str(l).lower(), "neutral") for l in ground_truth]
         y_pred = [label_map.get(str(l).lower(), "neutral") for l in pred_labels]
 
-        acc = accuracy_score(y_true, y_pred)
-        p, r, f1, _ = precision_recall_fscore_support(y_true, y_pred, average="macro")
-
         labels_unique = ["negative", "neutral", "positive"]
+
+        acc = accuracy_score(y_true, y_pred)
+        p, r, f1, support = precision_recall_fscore_support(
+            y_true, y_pred, labels=labels_unique, average=None
+        )
+        macro_p, macro_r, macro_f1, _ = precision_recall_fscore_support(
+            y_true, y_pred, labels=labels_unique, average="macro"
+        )
+
         # Confusion matrix
         cm = {}
         for true_l in labels_unique:
@@ -131,12 +172,25 @@ class BenchmarkRunner:
                     1 for yt, yp in zip(y_true, y_pred) if yt == true_l and yp == pred_l
                 )
 
+        class_metrics = {}
+        for i, cls_name in enumerate(labels_unique):
+            class_metrics[cls_name] = {
+                "precision": round(float(p[i]), 4),
+                "recall": round(float(r[i]), 4),
+                "f1_score": round(float(f1[i]), 4),
+                "support": int(support[i]),
+            }
+
         eval_res = {
+            "experiment_name": "RQ2_Sentiment_RoBERTa_Evaluation",
+            "dataset_identifier": dataset_name,
             "n_samples": len(texts),
+            "execution_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "accuracy": round(float(acc), 4),
-            "macro_precision": round(float(p), 4),
-            "macro_recall": round(float(r), 4),
-            "macro_f1": round(float(f1), 4),
+            "macro_precision": round(float(macro_p), 4),
+            "macro_recall": round(float(macro_r), 4),
+            "macro_f1": round(float(macro_f1), 4),
+            "class_metrics": class_metrics,
             "confusion_matrix": cm,
             "classes": labels_unique,
         }
