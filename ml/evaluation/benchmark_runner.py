@@ -178,8 +178,16 @@ class BenchmarkRunner:
         preds = analyzer.analyze_batch(texts)
         pred_labels = [p["label"] for p in preds]
 
-        # Standardize labels
+        # Standardize labels and track inference errors/status explicitly
         label_map = {"positive": "positive", "neutral": "neutral", "negative": "negative"}
+        inference_errors = [
+            i for i, p in enumerate(preds)
+            if p.get("status") in ("INFERENCE_ERROR", "EMPTY_INPUT") or str(p.get("label")).lower() not in label_map
+        ]
+        inference_error_count = len(inference_errors)
+        valid_inference_count = len(texts) - inference_error_count
+        inference_success_rate = round(valid_inference_count / max(1, len(texts)), 4)
+
         y_true = [label_map.get(str(l).lower(), "neutral") for l in ground_truth]
         y_pred = [label_map.get(str(l).lower(), "neutral") for l in pred_labels]
 
@@ -215,6 +223,9 @@ class BenchmarkRunner:
             "experiment_name": "RQ2_Sentiment_RoBERTa_Evaluation",
             "dataset_identifier": dataset_name,
             "n_samples": len(texts),
+            "inference_error_count": inference_error_count,
+            "valid_inference_count": valid_inference_count,
+            "inference_success_rate": inference_success_rate,
             "execution_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "accuracy": round(float(acc), 4),
             "macro_precision": round(float(macro_p), 4),

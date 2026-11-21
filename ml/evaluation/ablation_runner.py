@@ -101,11 +101,20 @@ class AblationStudyRunner:
 
         scorer_a0 = EmergingScorer()
         cluster_scores_a0 = []
+        valid_ts = [t for t in timestamps if pd.notna(t)]
+        temp_available = (len(valid_ts) >= 5) and (len(valid_ts) / max(1, len(timestamps)) >= 0.50)
         for cl in cluster_profiles:
             c_id = cl["cluster_id"]
-            trend = temporal_analyzer.analyze_cluster_trend(time_series_df, c_id) if not time_series_df.empty else {
-                "growth_rate": 0.0, "recent_volume": cl["size"], "baseline_volume": 0, "surge_probability": None
-            }
+            if temp_available and not time_series_df.empty:
+                trend = temporal_analyzer.analyze_cluster_trend(time_series_df, c_id)
+            else:
+                trend = {
+                    "growth_rate": 0.0,
+                    "recent_volume": 0,
+                    "baseline_volume": 0,
+                    "surge_probability": None,
+                    "data_sufficiency": "TEMPORAL_UNAVAILABLE",
+                }
             c_indices = [i for i, lbl in enumerate(cluster_labels) if lbl == c_id]
             c_sents = [sentiments[i] for i in c_indices]
             neg_ratio = float((np.array(c_sents) == "negative").mean()) if c_sents else 0.50
@@ -500,7 +509,7 @@ class AblationStudyRunner:
                     total_volume=item["total_volume"],
                     dataset_total_volume=item.get("dataset_total_volume", 1000),
                     growth_rate=item.get("growth_rate", 0.0) if config["has_temporal"] else 0.0,
-                    recent_volume=item.get("recent_volume", int(item["total_volume"] * 0.3)) if config["has_temporal"] else 0,
+                    recent_volume=item.get("recent_volume", 0) if config["has_temporal"] else 0,
                     negative_sentiment_ratio=item.get("negative_sentiment_ratio", 0.6) if config["has_sentiment"] else 0.33,
                     cluster_coherence=item.get("coherence", 0.75) if config.get("has_aspects", True) else 0.40,
                 )

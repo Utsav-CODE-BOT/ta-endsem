@@ -1,5 +1,5 @@
 from typing import Dict, List, Optional, Any, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 
 
 class IngestionStats(BaseModel):
@@ -64,7 +64,10 @@ class IssueDetailResponse(BaseModel):
 
 
 class EmergingIssueItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     issue_id: int
+    cluster_id: Optional[int] = None
     issue_name: str
     emerging_score: float
     priority: str
@@ -78,6 +81,25 @@ class EmergingIssueItem(BaseModel):
     confidence_level: Optional[str] = "MODERATE_STATISTICAL_SUPPORT"
     evidence_sufficient: Optional[bool] = True
     surge_probability: Optional[float] = None
+    coherence_reliable: Optional[bool] = None
+    trend_history: Optional[List[Dict[str, Any]]] = None
+    data_sufficiency: Optional[str] = None
+    cusum_change_detected: Optional[bool] = None
+    cusum_change_date: Optional[str] = None
+    temporal_available: Optional[bool] = None
+    weights_used: Optional[Dict[str, float]] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reconcile_identifiers(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            c_id = data.get("issue_id", data.get("cluster_id"))
+            if c_id is not None:
+                if "issue_id" not in data:
+                    data["issue_id"] = c_id
+                if "cluster_id" not in data:
+                    data["cluster_id"] = c_id
+        return data
 
 
 class RootCauseHypothesisItem(BaseModel):

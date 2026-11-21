@@ -156,7 +156,7 @@ All metrics below reflect **actual, measured experimental results** generated fr
 - **Backend:** Python 3.11+, FastAPI, SQLAlchemy, Pydantic v2, SQLite / PostgreSQL.
 - **NLP / ML:** PyTorch, Sentence-Transformers (`all-MiniLM-L6-v2`), Hugging Face Transformers (`cardiffnlp/twitter-roberta-base-sentiment-latest`), scikit-learn, NetworkX, SciPy, pandas, NumPy.
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, Lucide Icons, Recharts.
-- **Testing:** Pytest (33 unit & integration tests passing).
+- **Testing:** Pytest (52 unit, integration, and concurrency tests passing).
 
 ---
 
@@ -186,7 +186,7 @@ pip install -r requirements.txt
 
 ### 2. Run Tests & Empirical Experiments
 ```bash
-# Run complete test suite (50 passing unit and integration tests)
+# Run complete test suite (52 passing unit, integration, and concurrency tests)
 pytest backend/tests -v
 
 # Run research benchmark evaluations (RQ1 - RQ5)

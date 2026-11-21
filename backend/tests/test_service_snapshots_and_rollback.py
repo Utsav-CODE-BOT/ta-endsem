@@ -152,3 +152,95 @@ def test_temporal_unavailable_no_manufactured_surge():
         assert em.get("surge_probability") is None
         assert em["data_sufficiency"] == "TEMPORAL_UNAVAILABLE"
         assert em["confidence_level"] == "NO_TEMPORAL_DATA"
+
+
+def test_api_emerging_issues_schema_with_populated_analysis():
+    """
+    Validates that /api/emerging-issues returns valid EmergingIssueItem objects
+    with both issue_id and cluster_id matching without validation errors.
+    """
+    from fastapi.testclient import TestClient
+    from backend.app.main import app
+    from backend.app.schemas.schemas import EmergingIssueItem
+
+    service = PipelineService.get_instance()
+    df = pd.DataFrame([
+        {"id": f"t_{i}", "original_text": f"Customer delay and flight issue {i}", "clean_text": f"Customer delay and flight issue {i}", "normalized_text": f"customer delay flight issue {i}", "timestamp": None, "source": "Twitter", "language": "en", "word_count": 6, "metadata": {}}
+        for i in range(20)
+    ])
+    service.run_full_pipeline(df, n_clusters=2, db=None)
+
+    client = TestClient(app)
+    response = client.get("/api/emerging-issues")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 2
+
+    for item in data:
+        # Validate through Pydantic model directly
+        validated = EmergingIssueItem(**item)
+        assert validated.issue_id == item["issue_id"]
+        assert validated.cluster_id == item["issue_id"]
+        assert isinstance(validated.emerging_score, float)
+        assert validated.priority in {"CRITICAL", "HIGH", "MEDIUM", "LOW"}
+
+
+def test_genuine_multithreaded_realtime_matching_concurrency():
+    """
+    Genuine multi-threaded regression test verifying that real-time text matching
+    operates reliably against snapshot-isolated models while a concurrent thread
+    re-runs pipeline analysis on a separate dataset.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    service = PipelineService()
+
+    # Pre-populate with Dataset 1 (2 clusters)
+    df_1 = pd.DataFrame([
+        {"id": f"d1_{i}", "original_text": f"Payment gateway crash bug {i}", "clean_text": f"Payment gateway crash bug {i}", "normalized_text": f"payment gateway crash bug {i}", "timestamp": None, "source": "App", "language": "en", "word_count": 5, "metadata": {}}
+        for i in range(20)
+    ])
+    service.run_full_pipeline(df_1, n_clusters=2, db=None)
+    assert service.get_snapshot().is_ready is True
+
+    errors = []
+    realtime_results = []
+    stop_event = threading.Event()
+
+    def realtime_reader():
+        while not stop_event.is_set():
+            try:
+                res = service.analyze_realtime_text("The payment failed and app crashed")
+                assert res is not None
+                assert "matched_issue" in res
+                realtime_results.append(res)
+                time.sleep(0.01)
+            except Exception as e:
+                errors.append(e)
+
+    def pipeline_writer():
+        # Re-run pipeline with Dataset 2 (3 clusters)
+        df_2 = pd.DataFrame([
+            {"id": f"d2_{i}", "original_text": f"Flight delay lost baggage carousel {i}", "clean_text": f"Flight delay lost baggage carousel {i}", "normalized_text": f"flight delay lost baggage carousel {i}", "timestamp": None, "source": "Web", "language": "en", "word_count": 6, "metadata": {}}
+            for i in range(25)
+        ])
+        time.sleep(0.03)  # let reader run a few times on snapshot 1
+        service.run_full_pipeline(df_2, n_clusters=3, db=None)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        f_reader = executor.submit(realtime_reader)
+        f_writer = executor.submit(pipeline_writer)
+
+        f_writer.result()  # wait for pipeline to complete
+        time.sleep(0.05)   # let reader execute a few more iterations on the new snapshot
+        stop_event.set()
+        f_reader.result()
+
+    # Zero exceptions must have occurred across all threads
+    assert len(errors) == 0, f"Concurrency errors encountered: {errors}"
+    assert len(realtime_results) >= 5, "Expected multiple successful real-time analyses during concurrency"
+
+    # Verify final snapshot is updated to Dataset 2
+    final_snap = service.get_snapshot()
+    assert len(final_snap.clusters) == 3

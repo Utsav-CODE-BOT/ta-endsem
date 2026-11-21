@@ -4,6 +4,7 @@ import json
 import uuid
 import logging
 from typing import Dict, List, Optional, Any
+import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
 
@@ -175,8 +176,10 @@ def get_issue_detail(issue_id: int):
         if cl["cluster_id"] == issue_id:
             matched_metrics = None
             for em in snap.emerging:
-                if em["cluster_id"] == issue_id:
-                    matched_metrics = em
+                if em.get("cluster_id") == issue_id or em.get("issue_id") == issue_id:
+                    matched_metrics = dict(em)
+                    if "issue_id" not in matched_metrics:
+                        matched_metrics["issue_id"] = matched_metrics.get("cluster_id", issue_id)
                     break
 
             return IssueDetailResponse(
@@ -203,7 +206,15 @@ def list_emerging_issues():
     """
     service = PipelineService.get_instance()
     snap = service.get_snapshot()
-    return [EmergingIssueItem(**item) for item in snap.emerging]
+    results = []
+    for item in snap.emerging:
+        c_id = item.get("issue_id", item.get("cluster_id"))
+        item_copy = dict(item)
+        if c_id is not None:
+            item_copy["issue_id"] = c_id
+            item_copy["cluster_id"] = c_id
+        results.append(EmergingIssueItem(**item_copy))
+    return results
 
 
 @router.get("/issues/{issue_id}/root-causes", response_model=List[RootCauseHypothesisItem])
@@ -273,7 +284,8 @@ def get_issue_evidence(
         for t in snap.df["timestamp"]
     ]
 
-    evidence = service.evidence_retriever.retrieve_evidence(
+    retriever = snap.evidence_retriever if snap.evidence_retriever is not None else service.evidence_retriever
+    evidence = retriever.retrieve_evidence(
         query=search_query,
         texts=snap.df["clean_text"].tolist(),
         embeddings=snap.embeddings,

@@ -40,6 +40,9 @@ class AnalysisSnapshot:
     hypotheses: List[Dict[str, Any]] = field(default_factory=list)
     emerging: List[Dict[str, Any]] = field(default_factory=list)
     graph: Dict[str, Any] = field(default_factory=lambda: {"nodes": [], "links": []})
+    clusterer: Optional[Any] = None
+    evidence_retriever: Optional[Any] = None
+    candidate_miner: Optional[Any] = None
     temporal_available: bool = True
     similarity_threshold: float = 0.35
     is_ready: bool = False
@@ -52,6 +55,9 @@ class PipelineService:
     issue discovery, temporal change detection, candidate root-cause mining,
     and evidence retrieval.
     """
+
+    MIN_TEMPORAL_VALID_COUNT: int = 5
+    MIN_TEMPORAL_VALID_RATIO: float = 0.50
 
     _instance: Optional["PipelineService"] = None
 
@@ -209,7 +215,9 @@ class PipelineService:
             df["parsed_timestamp"] = pd.to_datetime(df[time_col], errors="coerce", utc=True)
             missing_timestamps = int(df["parsed_timestamp"].isna().sum())
             valid_time_count = len(df) - missing_timestamps
-            temporal_available = valid_time_count >= 5 and (valid_time_count / max(1, len(df)) >= 0.20)
+            temporal_available = (valid_time_count >= self.MIN_TEMPORAL_VALID_COUNT) and (
+                valid_time_count / max(1, len(df)) >= self.MIN_TEMPORAL_VALID_RATIO
+            )
         else:
             df["parsed_timestamp"] = [None] * len(df)
             missing_timestamps = len(df)
@@ -380,7 +388,9 @@ class PipelineService:
         # 5. Temporal Trend Analysis & 6. Emerging Issue Scoring
         logger.info("Calculating temporal dynamics & emerging issue prioritization...")
         valid_ts_count = sum(1 for t in timestamps if pd.notna(t))
-        local_temporal_available = (valid_ts_count / max(1, len(local_df)) >= 0.50) and (valid_ts_count >= 5)
+        local_temporal_available = (valid_ts_count >= self.MIN_TEMPORAL_VALID_COUNT) and (
+            valid_ts_count / max(1, len(local_df)) >= self.MIN_TEMPORAL_VALID_RATIO
+        )
         if local_temporal_available:
             time_series_df = self.temporal_analyzer.build_time_series(
                 timestamps=timestamps,
@@ -539,6 +549,9 @@ class PipelineService:
             hypotheses=all_hypotheses,
             emerging=emerging_issues,
             graph=local_graph,
+            clusterer=local_clusterer,
+            evidence_retriever=local_evidence_retriever,
+            candidate_miner=local_candidate_miner,
             temporal_available=local_temporal_available,
             similarity_threshold=float(similarity_threshold),
             is_ready=True,
@@ -700,8 +713,9 @@ class PipelineService:
 
         snap = self.get_snapshot()
         if snap.is_ready and snap.clusters and snap.embeddings is not None and snap.df is not None:
-            # Use open-set cluster prediction with centroid distance and propagated threshold
-            pred_match = self.clusterer.predict_cluster(single_emb, similarity_threshold=eff_threshold)
+            # Use snapshot-isolated clusterer
+            clusterer = snap.clusterer if snap.clusterer is not None else self.clusterer
+            pred_match = clusterer.predict_cluster(single_emb, similarity_threshold=eff_threshold)
             matched_issue = {
                 "issue_id": pred_match["cluster_id"],
                 "name": pred_match["name"],
@@ -724,9 +738,10 @@ class PipelineService:
                         }
                         break
 
-            # Retrieve evidence using hypothesis-aware stance retriever
+            # Retrieve evidence using snapshot-isolated hypothesis-aware stance retriever
             query_factor = candidate_cause["candidate_factor"] if candidate_cause else None
-            ev = self.evidence_retriever.retrieve_evidence(
+            retriever = snap.evidence_retriever if snap.evidence_retriever is not None else self.evidence_retriever
+            ev = retriever.retrieve_evidence(
                 query=clean_text,
                 texts=snap.df["clean_text"].tolist(),
                 embeddings=snap.embeddings,
