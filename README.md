@@ -8,6 +8,10 @@
 
 > **VoiceMiner** is an enterprise-grade, research-oriented Natural Language Processing (NLP) platform that analyzes heterogeneous customer-generated text to discover semantic issue clusters, track temporal velocity, detect emerging issues, and mine evidence-grounded candidate root causes.
 
+### Project Presentation
+- **PowerPoint Slide Deck:** [`VoiceMiner_Presentation.pptx`](./VoiceMiner_Presentation.pptx)
+- **Slide Notes & Documentation:** [`docs/presentation.md`](./docs/presentation.md)
+
 ---
 
 ## 1. Problem Statement & Motivation
